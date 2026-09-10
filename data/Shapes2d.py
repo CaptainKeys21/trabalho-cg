@@ -59,13 +59,33 @@ class Polygon(Shape2D):
         super().__init__(name, cords, color)
 
     def draw(self, viewport: Viewport):
+        print("--------------------------------\ndraw\n--------------------------------")
         vp_points = []
-
+        vp_points_old = []
+        ndc_points = []
         for i in range(self.cord_matrix_ndc.shape[0]):
             x_ndc = self.cord_matrix_ndc[i, 0]
             y_ndc = self.cord_matrix_ndc[i, 1]
-
+            print(x_ndc, y_ndc)
             sx, sy = viewport._ndc_to_viewport(x_ndc, y_ndc)
+            vp_points_old.extend([sx, sy])
+
+            ndc_points.extend([x_ndc, y_ndc])
+
+        newLines = viewport.clippingTool.clipPolygon(ndc_points)
+
+        for i in range(0, int(len(newLines)/2)):
+            sx, sy = viewport._ndc_to_viewport(newLines[i*2], newLines[(i*2)+1])
             vp_points.extend([sx, sy])
 
-        viewport.create_polygon(vp_points, fill=self.color)
+        viewport.create_polygon(vp_points, fill=self.color) # 0,0;50,0;50,50;0,50
+        print()
+        print(vp_points)
+        print(vp_points_old)
+        print()
+        print(ndc_points)
+        print(newLines)
+        print("--------------------------------\nend draw\n--------------------------------")
+        # (300.0), (300.0), (300.0), (240.0), (360.0), (300.0), (300.0), (240.0)
+
+        # (300.0), (300.0), (300.0), (240.0), (360.0), (300.0), (300.0), (240.0)
