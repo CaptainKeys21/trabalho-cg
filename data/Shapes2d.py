@@ -70,12 +70,13 @@ class Polygon(Shape2D):
             sx, sy = viewport._ndc_to_viewport(x_ndc, y_ndc)
             vp_points_old.extend([sx, sy])
 
-            ndc_points.extend([x_ndc, y_ndc])
+            ndc_points.append((x_ndc, y_ndc))
 
         newLines = viewport.clippingTool.clipPolygon(ndc_points)
+        print("hello")
 
-        for i in range(0, int(len(newLines)/2)):
-            sx, sy = viewport._ndc_to_viewport(newLines[i*2], newLines[(i*2)+1])
+        for i in range(0, len(newLines)):
+            sx, sy = viewport._ndc_to_viewport(newLines[i][0], newLines[i][1])
             vp_points.extend([sx, sy])
 
         viewport.create_polygon(vp_points, fill=self.color) # 0,0;50,0;50,50;0,50
