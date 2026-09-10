@@ -5,6 +5,7 @@ if TYPE_CHECKING:
 
 import tkinter as tk
 from tkinter import ttk
+from tkinter import colorchooser
 import math
 from data.Shapes2d import Point, Line, Polygon
 
@@ -24,6 +25,20 @@ class NewShapePopup(tk.Toplevel):
         self.ent_nome = tk.Entry(self)
         self.ent_nome.insert(0, "Novo Objeto")
         self.ent_nome.pack(fill="x", padx=10)
+
+        # --- Cor da Forma ---
+        tk.Label(self, text="Cor da Forma:").pack(anchor="w", padx=10, pady=(10, 0))
+        
+        self.selected_color = "#3498db" 
+        
+        frame_cor = tk.Frame(self)
+        frame_cor.pack(fill="x", padx=10)
+        
+        # Botão que mostra a cor atual visualmente
+        self.btn_color = tk.Button(frame_cor, bg=self.selected_color, width=4, command=self._open_colorpicker)
+        self.btn_color.pack(side="left")
+        
+        tk.Button(frame_cor, text="Alterar Cor", command=self._open_colorpicker).pack(side="left", padx=5)
         
         # --- Tipo de Forma ---
         tk.Label(self, text="Tipo de Forma:").pack(anchor="w", padx=10, pady=(10, 0))
@@ -82,6 +97,14 @@ class NewShapePopup(tk.Toplevel):
             pontos.append((px, py))
         return pontos
 
+    def _open_colorpicker(self):
+        chosen_color = colorchooser.askcolor(color=self.selected_color, title="Escolha a cor da forma")
+        
+        # Se o usuário não cancelar a janela (chosen_color[1] não for None)
+        if chosen_color[1]:
+            self.selected_color = chosen_color[1]
+            self.btn_color.config(bg=self.selected_color)
+
     def criar_forma(self):
         try:
             nome = self.parse_name()
@@ -90,19 +113,19 @@ class NewShapePopup(tk.Toplevel):
             tipo = self.var_tipo.get()
             
             if tipo == "Ponto":
-                forma = Point(nome, [(x, y)], color="#34495e")
+                forma = Point(nome, [(x, y)], color=self.selected_color)
             elif tipo == "Reta":
-                forma = Line(nome, [(x, y), (x + 20, y + 20)], color="#e74c3c")
+                forma = Line(nome, [(x, y), (x + 20, y + 20)], color=self.selected_color)
             elif tipo == "Polígono (Triângulo)":
-                forma = Polygon(nome, [(x, y), (x + 20, y), (x + 10, y + 20)], color="#9b59b6")
+                forma = Polygon(nome, [(x, y), (x + 20, y), (x + 10, y + 20)], color=self.selected_color)
             elif tipo == "Polígono (Quadrado)":
-                forma = Polygon(nome, [(x, y), (x + 20, y), (x + 20, y + 20), (x, y + 20)], color="#f1c40f")
+                forma = Polygon(nome, [(x, y), (x + 20, y), (x + 20, y + 20), (x, y + 20)], color=self.selected_color)
             elif tipo == "Polígono (Pentágono)":
                 pontos = self._gerar_poligono_regular(x, y, lados=5, raio=20)
-                forma = Polygon(nome, pontos, color="#e67e22")
+                forma = Polygon(nome, pontos, color=self.selected_color)
             elif tipo == "Polígono (Hexágono)":
                 pontos = self._gerar_poligono_regular(x, y, lados=6, raio=20)
-                forma = Polygon(nome, pontos, color="#1abc9c")
+                forma = Polygon(nome, pontos, color=self.selected_color)
             elif tipo == "Polígono (Customizado)":
                 pontos = []
                 # Divide a string nos separadores e converte para (X, Y)
