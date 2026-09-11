@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from views.Viewport import Viewport
 
+import math
 import tkinter as tk
 from tkinter import filedialog
 
@@ -208,25 +209,34 @@ class SideMenu(tk.Frame):
         self.viewport.wData.x_max, self.viewport.wData.y_max = 100, 100
         self.viewport.render()
 
+    def move_camera(self, dx_local: float, dy_local: float):
+        rad = math.radians(-self.viewport.wData.angle)
+
+        # Correção de ângulo
+        dx_mundo = dx_local * math.cos(rad) - dy_local * math.sin(rad)
+        dy_mundo = dx_local * math.sin(rad) + dy_local * math.cos(rad)
+        
+        self.viewport.pan(dx_mundo, dy_mundo)
+
     def move_viewport_left(self):
         passo = float(self.ent_passo.get()) / 100.0
         dx = self.viewport.wData.width() * passo
-        self.viewport.pan(-dx, 0)
+        self.move_camera(-dx, 0)
 
     def move_viewport_right(self):
         passo = float(self.ent_passo.get()) / 100.0
         dx = self.viewport.wData.width() * passo
-        self.viewport.pan(dx, 0)
+        self.move_camera(dx, 0)
 
     def move_viewport_up(self):
         passo = float(self.ent_passo.get()) / 100.0
         dy = self.viewport.wData.height() * passo
-        self.viewport.pan(0, dy)
+        self.move_camera(0, dy)
 
     def move_viewport_down(self):
         passo = float(self.ent_passo.get()) / 100.0
         dy = self.viewport.wData.height() * passo
-        self.viewport.pan(0, -dy)
+        self.move_camera(0, -dy)
 
     def zoom_viewport_in(self):
         passo = float(self.ent_passo.get()) / 100.0

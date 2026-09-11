@@ -134,7 +134,7 @@ class NewShapePopup(tk.Toplevel):
                     px, py = par.split(',')
                     # Adiciona a posição base digitada aos vértices relativos
                     pontos.append((x + float(px.strip()), y + float(py.strip())))
-                forma = Polygon(nome, pontos, color="#3498db")
+                forma = Polygon(nome, pontos, color=self.selected_color)
             else:
                 raise ValueError
                 
