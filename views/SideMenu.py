@@ -14,8 +14,35 @@ class SideMenu(tk.Frame):
     def __init__(self, parent, viewport: Viewport, **kwargs):
         super().__init__(parent, **kwargs)
         self.viewport = viewport
+
+        #há um canvas aqui para habilitar scroll no menu lateral
+        self.canvas = tk.Canvas(self, highlightthickness=0)
+        self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+
+        self.scrollable_frame = tk.Frame(self.canvas)
+        self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+
+        self.canvas.bind(
+            "<Configure>",
+            lambda e: self.canvas.itemconfig(self.canvas_window, width=e.width)
+        )
+
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
         
-        menu_frame = tk.LabelFrame(self, text="Menu de Funções", padx=5, pady=5)
+        self.scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        # Eventos da roda do mouse para rolar sem precisar clicar na barra
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)  # Windows/Mac
+        self.canvas.bind_all("<Button-4>", self._on_mousewheel)    # Linux (Scroll Up)
+        self.canvas.bind_all("<Button-5>", self._on_mousewheel)    # Linux (Scroll Down)
+        
+        menu_frame = tk.LabelFrame(self.scrollable_frame, text="Menu de Funções", padx=5, pady=5)
         menu_frame.pack(fill="y", expand=True)
         
         # --- 1. Objetos ---
@@ -130,6 +157,14 @@ class SideMenu(tk.Frame):
     def open_create_new_shape(self):
         NewShapePopup(self.winfo_toplevel(), self.viewport, self.update_list_box)
 
+    def _on_mousewheel(self, event):
+        """Permite rolar o menu usando a rodinha do mouse."""
+        # Linux usa Button-4 (Cima) e Button-5 (Baixo)
+        if event.num == 4 or event.delta > 0:
+            self.canvas.yview_scroll(-1, "units")
+        elif event.num == 5 or event.delta < 0:
+            self.canvas.yview_scroll(1, "units")
+
     def update_list_box(self):
         self.listbox.delete(0, tk.END)
         for i, shape in enumerate(self.viewport.shapes):
@@ -207,6 +242,7 @@ class SideMenu(tk.Frame):
         # Exemplo de reset caso precise
         self.viewport.wData.x_min, self.viewport.wData.y_min = -100, -100
         self.viewport.wData.x_max, self.viewport.wData.y_max = 100, 100
+        self.viewport.wData.angle = 0.0
         self.viewport.render()
 
     def move_camera(self, dx_local: float, dy_local: float):
