@@ -78,14 +78,5 @@ class Polygon(Shape2D):
             sx, sy = viewport._ndc_to_viewport(newLines[i][0], newLines[i][1])
             vp_points.extend([sx, sy])
 
-        viewport.create_polygon(vp_points_old, fill=self.color) # 0,0;50,0;50,50;0,50
-        # print()
-        # print(vp_points)
-        # print(vp_points_old)
-        # print()
-        # print(ndc_points)
-        # print(newLines)
+        viewport.create_polygon(vp_points, fill=self.color) # 0,0;50,0;50,50;0,50
         # print("--------------------------------\nend draw\n--------------------------------")
-        # (300.0), (300.0), (300.0), (240.0), (360.0), (300.0), (300.0), (240.0)
-
-        # (300.0), (300.0), (300.0), (240.0), (360.0), (300.0), (300.0), (240.0)
