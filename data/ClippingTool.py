@@ -55,9 +55,39 @@ class ClippingTool:
 
         return (current0, current1)
 
+    def clipLineCohenSutherlandDirectional(self, point0: Tuple[float, float], point1: Tuple[float, float], dir: Directions):
+        region0 = self.region(point0)
+        region1 = self.region(point1)
+        # if (region0 | region1 == 0 or (not(region0 & region1 == 0) and region0 & dir.value == 0)): return (point0, point1)
+
+        current0 = point0
+        current1 = point1
+
+        slope = 0 if (point1[0] - point0[0] == 0) else (point1[1] - point0[1])/(point1[0] - point0[0])
+
+        if(region0 & dir.value > 0):
+            if(dir == Directions.UP):
+                current0 = (current0[0], self.maxY) if (slope == 0) else  (current0[0] + (self.maxY - current0[1])/slope, self.maxY)
+            elif(dir == Directions.DOWN):
+                current0 = (current0[0], self.minY) if (slope == 0) else  (current0[0] + (self.minY - current0[1])/slope, self.minY)
+            elif(dir == Directions.LEFT):
+                current0 = (self.minX, current0[1] + (self.minX - current0[0]) * slope)
+            elif(dir == Directions.RIGHT):
+                current0 = (self.maxX, current0[1] + (self.maxX - current0[0]) * slope)
+
+        elif(region1 & dir.value > 0):
+            if(dir == Directions.UP):
+                current1 = (current1[0], self.maxY) if (slope == 0) else (current1[0] + (self.maxY - current1[1])/slope, self.maxY)
+            elif(dir == Directions.DOWN):
+                current1 = (current1[0], self.minY) if (slope == 0) else (current1[0] + (self.minY - current1[1])/slope, self.minY)
+            elif(dir == Directions.LEFT):
+                current1 = (self.minX, current1[1] + (self.minX - current1[0]) * slope)
+            elif(dir == Directions.RIGHT):
+                current1 = (self.maxX, current1[1] + (self.maxX - current1[0]) * slope)
+        return current0, current1
 
 
-    def clipLineLinangBarsky(self, point0: Tuple[float,float], point1: Tuple[float,float]):
+    def clipLineLiangBarsky(self, point0: Tuple[float,float], point1: Tuple[float,float]):
         if(point0[0] < self.minX and point1[0] < self.minX) or (point0[1] < self.minY and point1[1] < self.minY) or (point0[0] > self.maxX and point1[0] > self.maxX) or (point0[1] > self.maxY and point1[1] > self.maxY):
             return (0,0), (0, 0)
         deltaX = point1[0] - point0[0]
@@ -92,37 +122,51 @@ class ClippingTool:
 
     def clipPolygon(self, points: List[Tuple[float,float]]):
         newLines = []
-        previousDirection = 0
+        edges = [Directions.RIGHT, Directions.UP, Directions.LEFT, Directions.DOWN]
         for i in range(0, len(points)):
-            if(i < len(points) - 1):
-                n1, n2 = self.clipLineLinangBarsky(points[i], points[i + 1])
-            else:
-                n1, n2 = self.clipLineLinangBarsky(points[i], points[0])
+            newLines.append(points[i])
 
-            if not (n1[0] == 0 and n1[1] == 0 and n2[0] == 0 and n2[1] == 0):
-
-                if not(self.contains(newLines, n1)):
-                    newLines.append(n1)
-
-                if not (self.contains(newLines, n2)):
-                    newLines.append(n2)
-
-                # newDirection = self.intersectionWith([n1, n2])
-                # if(previousDirection != newDirection and previousDirection != Directions.NONE
-                #     and newDirection != Directions.NONE):
-                #     corner = self.getCorner([previousDirection, newDirection])
-                #     if not(self.contains(newLines, corner)):
-                #         newLines.append(corner)
-                # previousDirection = newDirection
+        for i in range(0, 4):
+            # print(edges[i])
+            intermediary = []
+            for j in range(0, len(newLines)):
+                if(j == len(newLines) - 1):
+                    vert0 = newLines[j]
+                    vert1 = newLines[0]
+                else:
+                    vert0 = newLines[j]
+                    vert1 = newLines[j + 1]
+                # print()
+                if(self.region(vert0) & edges[i].value == 0):
+                    if(self.region(vert1) & edges[i].value == 0):
+                        # print("BOTH IN: ", vert0, vert1, end=' ')
+                        # print("ADDED: ", vert1)
+                        intermediary.append(vert1)
+                    else:
+                        newV0, newV1 = self.clipLineCohenSutherlandDirectional(vert0, vert1, edges[i])
+                        intermediary.append(newV1)
+                        # print("SECOND OUT: ", vert0, vert1, end=' ')
+                        # print("ADDED: ", newV1)
+                elif(self.region(vert1) & edges[i].value == 0):
+                    newV0, newV1 = self.clipLineCohenSutherlandDirectional(vert0, vert1, edges[i])
+                    intermediary.append(newV0)
+                    intermediary.append(vert1)
+                    # print("FIRST OUT: ", vert0, vert1, end=' ')
+                    # print("ADDED: ", newV0, newV1)
+                # else:
+                    # print("BOTH OUT: ", vert0, vert1, end=' ')
+                    # print("ADDED: NONE")
+            newLines = []
+            for k in range(len(intermediary)):
+                newLines.append(intermediary[k])
 
         if(len(newLines) == 0):
-            # print(points)
             if(self.isSurrounding(points)):
                 newLines.append((self.minX, self.maxY))
                 newLines.append((self.minX, self.minY))
                 newLines.append((self.maxX, self.minY))
                 newLines.append((self.maxX, self.maxY))
-
+        # print(newLines)
         return newLines
 
     def contains(self, points: List[Tuple[float, float]], point: Tuple[float, float]):
@@ -135,13 +179,14 @@ class ClippingTool:
 
     def intersectionWith(self, points: List[Tuple[float, float]]):
         for i in range(0, len(points)):
-            if(points[i][0] == self.maxX):
+            reg = self.region(points[i])
+            if(reg & Directions.RIGHT.value > 0):
                 return Directions.RIGHT
-            if(points[i][0] == self.minX):
+            if(reg & Directions.LEFT.value > 0):
                 return Directions.LEFT
-            if(points[i][1] == self.maxY):
+            if(reg & Directions.UP.value > 0):
                 return Directions.UP
-            if(points[i][1] == self.minY):
+            if(reg & Directions.DOWN.value > 0):
                 return Directions.DOWN
         return Directions.NONE
 
