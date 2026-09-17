@@ -4,9 +4,9 @@ from typing import Tuple, List
 
 
 class Directions(Enum):
-    RIGHT = 1
-    LEFT = 2
-    UP = 3
+    RIGHT = 2
+    LEFT = 1
+    UP = 8
     DOWN = 4
     NONE = 0
 
@@ -18,7 +18,46 @@ class ClippingTool:
         self.maxY = maxY
 
 
-    def clipLine(self, point0: Tuple[float,float], point1: Tuple[float,float]):
+    def clipLineCohenSutherland(self, point0: Tuple[float,float], point1: Tuple[float,float]):
+        region0 = self.region(point0)
+        region1 = self.region(point1)
+        if(region0 | region1 == 0): return (point0, point1)
+        if not(region0 & region1 == 0): return ((0, 0), (0, 0))
+
+        slope = (point1[1] - point0[1])/(point1[0] - point0[0])
+
+        bothRegions = region0 | region1
+        current0 = point0
+        current1 = point1
+
+        while(bothRegions != 0):
+            if(self.region(current0) & Directions.UP.value > 0):
+                current0 = (current0[0] + (self.maxY - current0[1])/slope, self.maxY)
+            if(self.region(current1) & Directions.UP.value > 0):
+                current1 = (current1[0] + (self.maxY - current1[1])/slope, self.maxY)
+
+            if(self.region(current0) & Directions.DOWN.value > 0):
+                current0 = (current0[0] + (self.minY - current0[1])/slope, self.minY)
+            if(self.region(current1) & Directions.DOWN.value > 0):
+                current1 = (current1[0] + (self.minY - current1[1])/slope, self.minY)
+
+            if(self.region(current0) & Directions.LEFT.value > 0):
+                current0 = (self.minX, current0[1] + (self.minX - current0[0]) * slope)
+            if(self.region(current1) & Directions.LEFT.value > 0):
+                current1 = (self.minX, current1[1] + (self.minX - current1[0]) * slope)
+
+            if(self.region(current0) & Directions.RIGHT.value > 0):
+                current0 = (self.maxX, current0[1] + (self.maxX - current0[0]) * slope)
+            if(self.region(current1) & Directions.RIGHT.value > 0):
+                current1 = (self.maxX, current1[1] + (self.maxX - current1[0]) * slope)
+
+            bothRegions = self.region(current0) | self.region(current1)
+
+        return (current0, current1)
+
+
+
+    def clipLineLinangBarsky(self, point0: Tuple[float,float], point1: Tuple[float,float]):
         if(point0[0] < self.minX and point1[0] < self.minX) or (point0[1] < self.minY and point1[1] < self.minY) or (point0[0] > self.maxX and point1[0] > self.maxX) or (point0[1] > self.maxY and point1[1] > self.maxY):
             return (0,0), (0, 0)
         deltaX = point1[0] - point0[0]
@@ -53,7 +92,7 @@ class ClippingTool:
 
     def clipPolygon(self, points: List[Tuple[float,float]]):
         newLines = []
-        previousDirection = Directions.NONE
+        previousDirection = 0
         for i in range(0, len(points)):
             if(i < len(points) - 1):
                 n1, n2 = self.clipLine(points[i], points[i + 1])
@@ -87,15 +126,14 @@ class ClippingTool:
         return False
 
     def intersectionWith(self, points: List[Tuple[float, float]]):
-        print(points)
         for i in range(0, len(points)):
-            if(points[i][0] == 1):
+            if(points[i][0] == self.maxX):
                 return Directions.RIGHT
-            if(points[i][0] == -1):
+            if(points[i][0] == self.minX):
                 return Directions.LEFT
-            if(points[i][1] == 1):
+            if(points[i][1] == self.maxY):
                 return Directions.UP
-            if(points[i][1] == -1):
+            if(points[i][1] == self.minY):
                 return Directions.DOWN
         return Directions.NONE
 
@@ -104,12 +142,25 @@ class ClippingTool:
         retY = 0
         for i in range(0, len(dirs)):
             if (dirs[i] == Directions.RIGHT):
-                retX = 1
+                retX = self.maxX
             elif(dirs[i] == Directions.LEFT):
-                retX = -1
+                retX = self.minX
             elif(dirs[i] == Directions.UP):
-                retY = 1
+                retY = self.maxY
             elif(dirs[i] == Directions.DOWN):
-                retY = -1
+                retY = self.minY
 
         return (retX, retY)
+
+    def region(self, point: Tuple[float, float]):
+        top = 8 if point[1] > self.maxY else 0
+        bottom = 4 if point[1] < self.minY else 0
+        right = 2 if point[0] > self.maxX else 0
+        left = 1 if point[0] < self.minX else 0
+        return top | bottom | right | left
+
+#
+# tool = ClippingTool(-1, 1, -1, 1)
+# print(tool.clipLineCohenSutherland((0.1, 0.8), (0.7, 1.4)))
+# print(tool.clipLineCohenSutherland((0.3, 0.7), (1.4, 0.9)))
+# print(tool.clipLineCohenSutherland((0.4, 0.2), (1.2, 0.7)))

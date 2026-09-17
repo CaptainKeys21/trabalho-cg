@@ -3,14 +3,14 @@ from tkinter import ttk
 
 from views.Viewport import Viewport
 from views.SideMenu import SideMenu
-# import numpy as np
+import numpy as np
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Viewport 2D")
         self.geometry("1000x800")
-        # np.set_printoptions(legacy='1.25')
+        np.set_printoptions(legacy='1.25')
         # Container principal
         container = ttk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
