@@ -59,7 +59,7 @@ class Polygon(Shape2D):
         super().__init__(name, cords, color)
 
     def draw(self, viewport: Viewport):
-        print("--------------------------------\ndraw\n--------------------------------")
+        # print("--------------------------------\ndraw\n--------------------------------")
         vp_points = []
         vp_points_old = []
         ndc_points = []
@@ -79,4 +79,4 @@ class Polygon(Shape2D):
             vp_points.extend([sx, sy])
         if(len(vp_points) == 0): return
         viewport.create_polygon(vp_points, fill=self.color) # 0,0;50,0;50,50;0,50
-        print("--------------------------------\nend draw\n--------------------------------")
+        # print("--------------------------------\nend draw\n--------------------------------")

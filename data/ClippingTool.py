@@ -95,9 +95,9 @@ class ClippingTool:
         previousDirection = 0
         for i in range(0, len(points)):
             if(i < len(points) - 1):
-                n1, n2 = self.clipLine(points[i], points[i + 1])
+                n1, n2 = self.clipLineLinangBarsky(points[i], points[i + 1])
             else:
-                n1, n2 = self.clipLine(points[i], points[0])
+                n1, n2 = self.clipLineLinangBarsky(points[i], points[0])
 
             if not (n1[0] == 0 and n1[1] == 0 and n2[0] == 0 and n2[1] == 0):
 
@@ -107,13 +107,21 @@ class ClippingTool:
                 if not (self.contains(newLines, n2)):
                     newLines.append(n2)
 
-                newDirection = self.intersectionWith([n1, n2])
-                if(previousDirection != newDirection and previousDirection != Directions.NONE
-                    and newDirection != Directions.NONE):
-                    corner = self.getCorner([previousDirection, newDirection])
-                    if not(self.contains(newLines, corner)):
-                        newLines.append(corner)
-                previousDirection = newDirection
+                # newDirection = self.intersectionWith([n1, n2])
+                # if(previousDirection != newDirection and previousDirection != Directions.NONE
+                #     and newDirection != Directions.NONE):
+                #     corner = self.getCorner([previousDirection, newDirection])
+                #     if not(self.contains(newLines, corner)):
+                #         newLines.append(corner)
+                # previousDirection = newDirection
+
+        if(len(newLines) == 0):
+            # print(points)
+            if(self.isSurrounding(points)):
+                newLines.append((self.minX, self.maxY))
+                newLines.append((self.minX, self.minY))
+                newLines.append((self.maxX, self.minY))
+                newLines.append((self.maxX, self.maxY))
 
         return newLines
 
@@ -158,6 +166,34 @@ class ClippingTool:
         right = 2 if point[0] > self.maxX else 0
         left = 1 if point[0] < self.minX else 0
         return top | bottom | right | left
+
+    def isSurrounding(self, points:List[Tuple[float, float]]):
+        reg = self.region(points[0])
+        count = 0
+        for i in range(1, len(points)):
+            if(reg == Directions.UP.value | Directions.RIGHT.value):
+                if(self.region(points[i]) == Directions.DOWN.value | Directions.RIGHT.value):
+                    count += 1
+                elif(self.region(points[i]) == Directions.UP.value | Directions.LEFT.value):
+                    count -= 1
+            elif(reg == Directions.LEFT.value | Directions.UP.value):
+                if(self.region(points[i]) == Directions.UP.value | Directions.RIGHT.value):
+                    count += 1
+                elif(self.region(points[i]) == Directions.DOWN.value | Directions.LEFT.value):
+                    count -= 1
+            elif(reg == Directions.DOWN.value | Directions.LEFT.value):
+                if(self.region(points[i]) == Directions.UP.value | Directions.LEFT.value):
+                    count += 1
+                elif(self.region(points[i]) == Directions.DOWN.value | Directions.RIGHT.value):
+                    count -= 1
+            elif(reg == Directions.RIGHT.value | Directions.DOWN.value):
+                if(self.region(points[i]) == Directions.DOWN.value | Directions.LEFT.value):
+                    count += 1
+                elif(self.region(points[i]) == Directions.UP.value | Directions.RIGHT.value):
+                    count -= 1
+            reg = self.region(points[i])
+        # print("count: ", count)
+        return (count != 0) and (self.region(points[len(points) - 1]) & self.region(points[0]) != 0)
 
 #
 # tool = ClippingTool(-1, 1, -1, 1)
