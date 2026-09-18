@@ -148,6 +148,14 @@ class SideMenu(tk.Frame):
         
         tk.Button(menu_frame, text="Resetar Câmera", command=self.reset_camera).pack(fill="x", padx=10, pady=10)
 
+        # --- Selecao de algoritmo de clipping ---
+        clip_frame = tk.LabelFrame(menu_frame, text="Algoritmo de Clipping de Linha", padx=5, pady=5)
+        clip_frame.pack(fill="x", pady=2)
+
+        self.var_tipo_clip = tk.StringVar(value="liang-barsky")
+        tk.Radiobutton(clip_frame, text="Liang-Barsky", variable=self.var_tipo_clip, value="liang-barsky", command=self.set_clipping_algorithm).pack(anchor="w")
+        tk.Radiobutton(clip_frame, text="Cohen-Sutherland", variable=self.var_tipo_clip, value="cohen-sutherland", command=self.set_clipping_algorithm).pack(anchor="w")
+
         file_frame = tk.LabelFrame(menu_frame, text="Arquivos", padx=5, pady=5)
         file_frame.pack(fill="x", pady=10)
         
@@ -292,6 +300,14 @@ class SideMenu(tk.Frame):
     def rotate_window_right(self):
         passo = float(self.ent_passo.get())
         self.viewport.rotate(-passo)
+
+    def set_clipping_algorithm(self):
+        algorithm = self.var_tipo_clip.get()
+        if(algorithm == "liang-barsky"):
+            self.viewport.clippingTool.set_clipping_algorithm(self.viewport.clippingTool.clipLineLiangBarskyDirectional)
+        elif(algorithm == "cohen-sutherland"):
+            self.viewport.clippingTool.set_clipping_algorithm(self.viewport.clippingTool.clipLineCohenSutherlandDirectional)
+        self.viewport.render()
 
     def save_file(self):
         filepath = filedialog.asksaveasfilename(

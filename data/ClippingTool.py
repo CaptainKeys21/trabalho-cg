@@ -15,7 +15,10 @@ class ClippingTool:
         self.maxX = maxX
         self.minY = minY
         self.maxY = maxY
+        self.clippingAlgorithm = self.clipLineLiangBarskyDirectional
 
+    def set_clipping_algorithm(self, algorithm):
+        self.clippingAlgorithm = algorithm
 
     def clipLineCohenSutherland(self, point0: Tuple[float,float], point1: Tuple[float,float]):
         region0 = self.region(point0)
@@ -162,7 +165,6 @@ class ClippingTool:
         edges = [Directions.RIGHT, Directions.UP, Directions.LEFT, Directions.DOWN]
         for i in range(0, len(points)):
             newLines.append(points[i])
-
         for i in range(0, 4): # Iterativemante faz o clipping do poligono para cada borda, utilizando algoritmos de clipping de linha modificados
             intermediary = []
             for j in range(0, len(newLines)):
@@ -176,10 +178,10 @@ class ClippingTool:
                     if(self.region(vert1) & edges[i].value == 0):
                         intermediary.append(vert1)
                     else:
-                        newV0, newV1 = self.clipLineLiangBarskyDirectional(vert0, vert1, edges[i])
+                        newV0, newV1 = self.clippingAlgorithm(vert0, vert1, edges[i])
                         intermediary.append(newV1)
                 elif(self.region(vert1) & edges[i].value == 0):
-                    newV0, newV1 = self.clipLineLiangBarskyDirectional(vert0, vert1, edges[i])
+                    newV0, newV1 = self.clippingAlgorithm(vert0, vert1, edges[i])
                     intermediary.append(newV0)
                     intermediary.append(vert1)
             newLines = []
