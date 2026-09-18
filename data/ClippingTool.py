@@ -1,5 +1,4 @@
 from enum import Enum
-from tkinter.constants import RIGHT
 from typing import Tuple, List
 
 
@@ -30,7 +29,7 @@ class ClippingTool:
         current0 = point0
         current1 = point1
 
-        while(bothRegions != 0):
+        while(bothRegions != 0): # Oh brother this algo stinks
             if(self.region(current0) & Directions.UP.value > 0):
                 current0 = (current0[0] + (self.maxY - current0[1])/slope, self.maxY)
             if(self.region(current1) & Directions.UP.value > 0):
@@ -58,14 +57,13 @@ class ClippingTool:
     def clipLineCohenSutherlandDirectional(self, point0: Tuple[float, float], point1: Tuple[float, float], dir: Directions):
         region0 = self.region(point0)
         region1 = self.region(point1)
-        # if (region0 | region1 == 0 or (not(region0 & region1 == 0) and region0 & dir.value == 0)): return (point0, point1)
 
         current0 = point0
         current1 = point1
 
         slope = 0 if (point1[0] - point0[0] == 0) else (point1[1] - point0[1])/(point1[0] - point0[0])
 
-        if(region0 & dir.value > 0):
+        if(region0 & dir.value > 0): # Real messy
             if(dir == Directions.UP):
                 current0 = (current0[0], self.maxY) if (slope == 0) else  (current0[0] + (self.maxY - current0[1])/slope, self.maxY)
             elif(dir == Directions.DOWN):
@@ -129,7 +127,7 @@ class ClippingTool:
         ent = 0
         ex = 1
 
-        i = 0
+        i = 0 # Nao itera, apenas usa a borda especificada
         if(dir == Directions.RIGHT):
             i = 1
         elif(dir == Directions.DOWN):
@@ -159,14 +157,13 @@ class ClippingTool:
 
         return (new0x, new0y), (new1x, new1y)
 
-    def clipPolygon(self, points: List[Tuple[float,float]]):
+    def clipPolygonSutherlandHodgeman(self, points: List[Tuple[float,float]]):
         newLines = []
         edges = [Directions.RIGHT, Directions.UP, Directions.LEFT, Directions.DOWN]
         for i in range(0, len(points)):
             newLines.append(points[i])
 
-        for i in range(0, 4):
-            # print(edges[i])
+        for i in range(0, 4): # Iterativemante faz o clipping do poligono para cada borda, utilizando algoritmos de clipping de linha modificados
             intermediary = []
             for j in range(0, len(newLines)):
                 if(j == len(newLines) - 1):
@@ -175,83 +172,36 @@ class ClippingTool:
                 else:
                     vert0 = newLines[j]
                     vert1 = newLines[j + 1]
-                # print()
                 if(self.region(vert0) & edges[i].value == 0):
                     if(self.region(vert1) & edges[i].value == 0):
-                        # print("BOTH IN: ", vert0, vert1, end=' ')
-                        # print("ADDED: ", vert1)
                         intermediary.append(vert1)
                     else:
                         newV0, newV1 = self.clipLineLiangBarskyDirectional(vert0, vert1, edges[i])
                         intermediary.append(newV1)
-                        # print("SECOND OUT: ", vert0, vert1, end=' ')
-                        # print("ADDED: ", newV1)
                 elif(self.region(vert1) & edges[i].value == 0):
                     newV0, newV1 = self.clipLineLiangBarskyDirectional(vert0, vert1, edges[i])
                     intermediary.append(newV0)
                     intermediary.append(vert1)
-                    # print("FIRST OUT: ", vert0, vert1, end=' ')
-                    # print("ADDED: ", newV0, newV1)
-                # else:
-                    # print("BOTH OUT: ", vert0, vert1, end=' ')
-                    # print("ADDED: NONE")
             newLines = []
             for k in range(len(intermediary)):
                 newLines.append(intermediary[k])
 
-        if(len(newLines) == 0):
+        if(len(newLines) == 0): # Faz o draw de um quadrado na viewport inteira caso um poligono a ocupe e seus vertices estejam fora dela
             if(self.isSurrounding(points)):
                 newLines.append((self.minX, self.maxY))
                 newLines.append((self.minX, self.minY))
                 newLines.append((self.maxX, self.minY))
                 newLines.append((self.maxX, self.maxY))
-        # print(newLines)
         return newLines
 
-    def contains(self, points: List[Tuple[float, float]], point: Tuple[float, float]):
-        length = len(points)
-        for i in range(0, length):
-            if(points[i][0] == point[0] and points[i][1] == point[1]):
-                return True
-
-        return False
-
-    def intersectionWith(self, points: List[Tuple[float, float]]):
-        for i in range(0, len(points)):
-            reg = self.region(points[i])
-            if(reg & Directions.RIGHT.value > 0):
-                return Directions.RIGHT
-            if(reg & Directions.LEFT.value > 0):
-                return Directions.LEFT
-            if(reg & Directions.UP.value > 0):
-                return Directions.UP
-            if(reg & Directions.DOWN.value > 0):
-                return Directions.DOWN
-        return Directions.NONE
-
-    def getCorner(self, dirs: List[Directions]):
-        retX = 0
-        retY = 0
-        for i in range(0, len(dirs)):
-            if (dirs[i] == Directions.RIGHT):
-                retX = self.maxX
-            elif(dirs[i] == Directions.LEFT):
-                retX = self.minX
-            elif(dirs[i] == Directions.UP):
-                retY = self.maxY
-            elif(dirs[i] == Directions.DOWN):
-                retY = self.minY
-
-        return (retX, retY)
-
-    def region(self, point: Tuple[float, float]):
+    def region(self, point: Tuple[float, float]): # Determina a regiao de um ponto em relacao aos limites da viewport
         top = 8 if point[1] > self.maxY else 0
         bottom = 4 if point[1] < self.minY else 0
         right = 2 if point[0] > self.maxX else 0
         left = 1 if point[0] < self.minX else 0
         return top | bottom | right | left
 
-    def isSurrounding(self, points:List[Tuple[float, float]]):
+    def isSurrounding(self, points:List[Tuple[float, float]]): # Utilizado para determinar se um poligono ocupa a tela inteira
         reg = self.region(points[0])
         count = 0
         for i in range(1, len(points)):
@@ -276,11 +226,4 @@ class ClippingTool:
                 elif(self.region(points[i]) == Directions.UP.value | Directions.RIGHT.value):
                     count -= 1
             reg = self.region(points[i])
-        # print("count: ", count)
         return (count != 0) and (self.region(points[len(points) - 1]) & self.region(points[0]) != 0)
-
-#
-# tool = ClippingTool(-1, 1, -1, 1)
-# print(tool.clipLineCohenSutherland((0.1, 0.8), (0.7, 1.4)))
-# print(tool.clipLineCohenSutherland((0.3, 0.7), (1.4, 0.9)))
-# print(tool.clipLineCohenSutherland((0.4, 0.2), (1.2, 0.7)))

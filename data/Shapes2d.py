@@ -61,24 +61,17 @@ class Polygon(Shape2D):
         super().__init__(name, cords, color)
 
     def draw(self, viewport: Viewport):
-        # print("--------------------------------\ndraw\n--------------------------------")
         vp_points = []
-        vp_points_old = []
         ndc_points = []
         for i in range(self.cord_matrix_ndc.shape[0]):
             x_ndc = self.cord_matrix_ndc[i, 0]
             y_ndc = self.cord_matrix_ndc[i, 1]
-            # print(x_ndc, y_ndc)
-            sx, sy = viewport._ndc_to_viewport(x_ndc, y_ndc)
-            vp_points_old.extend([sx, sy])
+            ndc_points.append((x_ndc, y_ndc)) # Redireciona as coordenadas normalizadas para receberem clipping
 
-            ndc_points.append((x_ndc, y_ndc))
-
-        newLines = viewport.clippingTool.clipPolygon(ndc_points)
+        newLines = viewport.clippingTool.clipPolygonSutherlandHodgeman(ndc_points) # Executa o clipping
 
         for i in range(0, len(newLines)):
-            sx, sy = viewport._ndc_to_viewport(newLines[i][0], newLines[i][1])
-            vp_points.extend([sx, sy])
-        if(len(vp_points) == 0): return
-        viewport.create_polygon(vp_points, fill=self.color) # 0,0;50,0;50,50;0,50
-        # print("--------------------------------\nend draw\n--------------------------------")
+            sx, sy = viewport._ndc_to_viewport(newLines[i][0], newLines[i][1]) # Faz a transformada da viewport
+            vp_points.extend([sx, sy]) # Devolve as coordenadas, agora transformadas
+        if(len(vp_points) == 0): return # Se todo o poligono esta fora de vista, ignora
+        viewport.create_polygon(vp_points, fill=self.color) # Renderiza o poligono
