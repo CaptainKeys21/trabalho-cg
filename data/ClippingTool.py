@@ -120,6 +120,45 @@ class ClippingTool:
 
         return (new0x, new0y), (new1x, new1y)
 
+
+    def clipLineLiangBarskyDirectional(self, point0: Tuple[float,float], point1: Tuple[float,float], dir: Directions):
+        deltaX = point1[0] - point0[0]
+        deltaY = point1[1] - point0[1]
+        p = [-deltaX, deltaX, -deltaY, deltaY]
+        q = [point0[0] - self.minX, self.maxX - point0[0], point0[1] - self.minY, self.maxY - point0[1]]
+        ent = 0
+        ex = 1
+
+        i = 0
+        if(dir == Directions.RIGHT):
+            i = 1
+        elif(dir == Directions.DOWN):
+            i = 2
+        elif(dir == Directions.UP):
+            i = 3
+
+        if p[i] == 0:
+            if q[i] < 0:
+                return (0,0), (0,0)
+        else:
+            t = q[i]/p[i]
+            if p[i] < 0:
+                if t > ent:
+                    ent = t
+            else:
+                if t < ex:
+                    ex = t
+
+        if ent > ex:
+            return (0,0), (0,0)
+
+        new0x = point0[0] + ent * deltaX
+        new0y = point0[1] + ent * deltaY
+        new1x = point0[0] + ex * deltaX
+        new1y = point0[1] + ex * deltaY
+
+        return (new0x, new0y), (new1x, new1y)
+
     def clipPolygon(self, points: List[Tuple[float,float]]):
         newLines = []
         edges = [Directions.RIGHT, Directions.UP, Directions.LEFT, Directions.DOWN]
@@ -143,12 +182,12 @@ class ClippingTool:
                         # print("ADDED: ", vert1)
                         intermediary.append(vert1)
                     else:
-                        newV0, newV1 = self.clipLineCohenSutherlandDirectional(vert0, vert1, edges[i])
+                        newV0, newV1 = self.clipLineLiangBarskyDirectional(vert0, vert1, edges[i])
                         intermediary.append(newV1)
                         # print("SECOND OUT: ", vert0, vert1, end=' ')
                         # print("ADDED: ", newV1)
                 elif(self.region(vert1) & edges[i].value == 0):
-                    newV0, newV1 = self.clipLineCohenSutherlandDirectional(vert0, vert1, edges[i])
+                    newV0, newV1 = self.clipLineLiangBarskyDirectional(vert0, vert1, edges[i])
                     intermediary.append(newV0)
                     intermediary.append(vert1)
                     # print("FIRST OUT: ", vert0, vert1, end=' ')

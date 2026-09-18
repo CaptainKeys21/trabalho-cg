@@ -35,6 +35,8 @@ class Point(Shape2D):
         self.radius = 2 # só pra dar tamanho ao ponto
 
     def draw(self, viewport: Viewport):
+        if(abs(self.cord_matrix_ndc[0][0]) > 1 or  # Clipping simples
+                abs(self.cord_matrix_ndc[0][1]) > 1): return
         x_vp, y_vp = viewport._ndc_to_viewport(*self.cord_matrix_ndc[0][:2])
         viewport.create_oval(
             x_vp - self.radius, 
