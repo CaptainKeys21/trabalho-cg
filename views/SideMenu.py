@@ -304,9 +304,11 @@ class SideMenu(tk.Frame):
     def set_clipping_algorithm(self):
         algorithm = self.var_tipo_clip.get()
         if(algorithm == "liang-barsky"):
-            self.viewport.clippingTool.set_clipping_algorithm(self.viewport.clippingTool.clipLineLiangBarskyDirectional)
+            self.viewport.clippingTool.set_clipping_algorithm_directional(self.viewport.clippingTool.clipLineLiangBarskyDirectional)
+            self.viewport.clippingTool.set_clipping_algorithm(self.viewport.clippingTool.clipLineLiangBarsky)
         elif(algorithm == "cohen-sutherland"):
-            self.viewport.clippingTool.set_clipping_algorithm(self.viewport.clippingTool.clipLineCohenSutherlandDirectional)
+            self.viewport.clippingTool.set_clipping_algorithm_directional(self.viewport.clippingTool.clipLineCohenSutherlandDirectional)
+            self.viewport.clippingTool.set_clipping_algorithm(self.viewport.clippingTool.clipLineCohenSutherland)
         self.viewport.render()
 
     def save_file(self):

@@ -15,7 +15,11 @@ class ClippingTool:
         self.maxX = maxX
         self.minY = minY
         self.maxY = maxY
-        self.clippingAlgorithm = self.clipLineLiangBarskyDirectional
+        self.clippingAlgorithmDirectional = self.clipLineLiangBarskyDirectional
+        self.clippingAlgorithm = self.clipLineLiangBarsky
+
+    def set_clipping_algorithm_directional(self, algorithm):
+        self.clippingAlgorithmDirectional = algorithm
 
     def set_clipping_algorithm(self, algorithm):
         self.clippingAlgorithm = algorithm
@@ -178,10 +182,10 @@ class ClippingTool:
                     if(self.region(vert1) & edges[i].value == 0):
                         intermediary.append(vert1)
                     else:
-                        newV0, newV1 = self.clippingAlgorithm(vert0, vert1, edges[i])
+                        newV0, newV1 = self.clippingAlgorithmDirectional(vert0, vert1, edges[i])
                         intermediary.append(newV1)
                 elif(self.region(vert1) & edges[i].value == 0):
-                    newV0, newV1 = self.clippingAlgorithm(vert0, vert1, edges[i])
+                    newV0, newV1 = self.clippingAlgorithmDirectional(vert0, vert1, edges[i])
                     intermediary.append(newV0)
                     intermediary.append(vert1)
             newLines = []

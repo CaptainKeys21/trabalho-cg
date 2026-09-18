@@ -51,8 +51,9 @@ class Line(Shape2D):
         super().__init__(name, cords, color)
 
     def draw(self, viewport: Viewport):
-        x0_vp, y0_vp = viewport._ndc_to_viewport(*self.cord_matrix_ndc[0][:2])
-        x1_vp, y1_vp = viewport._ndc_to_viewport(*self.cord_matrix_ndc[1][:2])
+        ndc0, ndc1 = viewport.clippingTool.clippingAlgorithm(self.cord_matrix_ndc[0], self.cord_matrix_ndc[1])
+        x0_vp, y0_vp = viewport._ndc_to_viewport(ndc0[0], ndc0[1])
+        x1_vp, y1_vp = viewport._ndc_to_viewport(ndc1[0], ndc1[1])
 
         viewport.create_line(x0_vp, y0_vp, x1_vp, y1_vp, fill=self.color)
 
