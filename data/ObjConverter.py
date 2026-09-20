@@ -1,4 +1,4 @@
-from data.Shapes2d import Shape2D, Polygon, Line, Point
+from data.Shapes2d import Shape2D, Polygon, Line, Point, BezierCurve
 
 class ObjConverter:
     @staticmethod
@@ -27,6 +27,8 @@ class ObjConverter:
                     file.write(f"l {index_str}\n")
                 elif isinstance(shape, Polygon):
                     file.write(f"f {index_str}\n")
+                elif isinstance(shape, BezierCurve):
+                    file.write(f"b {index_str}\n")
 
     @staticmethod
     def _import(filepath: str) -> list[Shape2D]:
@@ -69,6 +71,12 @@ class ObjConverter:
                     index = [int(p.split('/')[0]) - 1 for p in parts[1:]]
                     cords = [vertex[i] for i in index]
                     shape = Polygon(current_name, cords, current_color)
+                    loaded_shapes.append(shape)
+
+                elif prefix == "b":
+                    index = [int(p.split('/')[0]) - 1 for p in parts[1:]]
+                    cords = [vertex[i] for i in index]
+                    shape = BezierCurve(current_name, cords, current_color)
                     loaded_shapes.append(shape)
 
         return loaded_shapes

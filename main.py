@@ -5,6 +5,10 @@ from views.Viewport import Viewport
 from views.SideMenu import SideMenu
 import numpy as np
 
+# Nota: A maioria das construções de interface foram feitas com IA, 
+# porque acredito que ficar passando raiva com o tkinter não faz parte da matéria
+# IA Usada: Gemini Pro 3.1
+# Prompts: Foram muitos em várias iterações de entrega, difícil enumerar todos.
 class App(tk.Tk):
     def __init__(self):
         super().__init__()

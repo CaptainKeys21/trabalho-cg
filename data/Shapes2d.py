@@ -76,3 +76,46 @@ class Polygon(Shape2D):
             vp_points.extend([sx, sy]) # Devolve as coordenadas, agora transformadas
         if(len(vp_points) == 0): return # Se todo o poligono esta fora de vista, ignora
         viewport.create_polygon(vp_points, fill=self.color) # Renderiza o poligono
+
+class BezierCurve(Shape2D):
+    def __init__(self, name: str, cords: list[tuple[float, float]], color: str = "#000000"):
+        super().__init__(name, cords, color)
+        self.resolution = 1000
+
+    # A implementação da formula feita nos slides de aula é válida apenas para curvas com 4 pontos aparentemente
+    # O Gemini me sugeriu usar curvas de Bernstein, que é válida para N pontos
+    # IA usada: Gemini 3.1 Pro (Estendido)
+    # Prompt: Vamos adicionar uma Curva Bézier 2D como mais um objeto gráfico na minha interface, no modal de criação de formas deve ter uma opção para curvas bezier e deve ser possível inserir uma quantidade infinita de pontos no formato (x1,y1),(x2,y2),...,(xi,yi)
+    def draw(self, viewport: Viewport):
+        import math
+        pontos_tela = []
+        n = self.cord_matrix_ndc.shape[0] - 1  # Grau da curva (N pontos - 1)
+        
+        # Se não houver pelo menos 2 pontos de controle, não há como desenhar curva
+        if n < 1:
+            return
+            
+        # Avalia a curva ao longo do parâmetro 't' de 0.0 a 1.0
+        for i in range(self.resolution + 1):
+            t = i / self.resolution
+            px, py = 0.0, 0.0
+            
+            # Algoritmo Baseado no Polinômio de Bernstein
+            for j in range(n + 1):
+                # Coeficiente Binomial (Combinação)
+                comb = math.comb(n, j)
+                # Termo de Bernstein
+                bernstein = comb * ((1 - t) ** (n - j)) * (t ** j)
+                
+                # Multiplica pelo Ponto de Controle (Lendo do espaço Paralelo/NDC)
+                px += bernstein * self.cord_matrix_ndc[j, 0]
+                py += bernstein * self.cord_matrix_ndc[j, 1]
+            
+            # Envia a coordenada Normalizada gerada para os Pixels da Tela
+            sx, sy = viewport._ndc_to_viewport(px, py)
+            pontos_tela.extend([sx, sy])
+            
+        # Desenha a curva conectando os pontos de resolução
+        if len(pontos_tela) >= 4:
+            viewport.create_line(pontos_tela, fill=self.color, width=2)
+        

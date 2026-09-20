@@ -7,7 +7,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import colorchooser
 import math
-from data.Shapes2d import Point, Line, Polygon
+from data.Shapes2d import Point, Line, Polygon, BezierCurve
 
 class NewShapePopup(tk.Toplevel):
     def __init__(self, parent, viewport: Viewport, on_add_callback):
@@ -45,16 +45,18 @@ class NewShapePopup(tk.Toplevel):
         self.var_tipo = tk.StringVar(value="Ponto")
         opcoes = [
             "Ponto", "Reta", "Polígono (Triângulo)", "Polígono (Quadrado)", 
-            "Polígono (Pentágono)", "Polígono (Hexágono)", "Polígono (Customizado)"
+            "Polígono (Pentágono)", "Polígono (Hexágono)", "Polígono (Customizado)",
+            "Curva Bézier"
         ]
         combo = ttk.Combobox(self, textvariable=self.var_tipo, values=opcoes, state="readonly")
         combo.pack(fill="x", padx=10)
         combo.bind("<<ComboboxSelected>>", self._toggle_entradas)
         
         # --- Campo Vértices Customizados ---
-        tk.Label(self, text="Vértices Custom (ex: 0,0; 10,0; 5,10):").pack(anchor="w", padx=10, pady=(10, 0))
+        tk.Label(self, text="Custom / Bézier (ex: 0,0; 10,0; 5,10):").pack(anchor="w", padx=10, pady=(10, 0))
         self.ent_custom = tk.Entry(self, state="disabled")
-        self.ent_custom.insert(0, "0,0; 20,0; 10,20")
+        # Colocando um placeholder condizente
+        self.ent_custom.insert(0, "0,0; 20,20; 40,0; 60,20;")
         self.ent_custom.pack(fill="x", padx=10)
         
         # --- Posição Inicial ---
@@ -77,13 +79,13 @@ class NewShapePopup(tk.Toplevel):
         tk.Button(self, text="Adicionar", command=self.criar_forma, bg="#27ae60", fg="white").pack(fill="x", padx=10, pady=15)
 
     def _toggle_entradas(self, event=None):
-        # Libera os inputs X e Y
         estado_pos = "normal" if self.var_pos.get() == "arbitrario" else "disabled"
         self.ent_x.config(state=estado_pos)
         self.ent_y.config(state=estado_pos)
         
-        # Libera o input de vértices customizados
-        estado_custom = "normal" if self.var_tipo.get() == "Polígono (Customizado)" else "disabled"
+        # Libera o campo customizado tanto para Polígono quanto para Bézier
+        tipo = self.var_tipo.get()
+        estado_custom = "normal" if tipo in ["Polígono (Customizado)", "Curva Bézier"] else "disabled"
         self.ent_custom.config(state=estado_custom)
 
     def _gerar_poligono_regular(self, cx: float, cy: float, lados: int, raio: float = 15.0):
@@ -135,6 +137,15 @@ class NewShapePopup(tk.Toplevel):
                     # Adiciona a posição base digitada aos vértices relativos
                     pontos.append((x + float(px.strip()), y + float(py.strip())))
                 forma = Polygon(nome, pontos, color=self.selected_color)
+            elif tipo == "Curva Bézier":
+                pontos = []
+                # Divide a string nos separadores e converte para (X, Y)
+                raw_pontos = self.ent_custom.get().split(';')
+                for par in raw_pontos:
+                    px, py = par.split(',')
+                    # Adiciona a posição base digitada aos vértices relativos
+                    pontos.append((x + float(px.strip()), y + float(py.strip())))
+                forma = BezierCurve(nome, pontos, color=self.selected_color)
             else:
                 raise ValueError
                 
