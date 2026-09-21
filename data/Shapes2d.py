@@ -1,5 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
+from numpy.f2py.crackfortran import previous_context
+
 if TYPE_CHECKING:
     from views.Viewport import Viewport
 
@@ -74,7 +77,7 @@ class Polygon(Shape2D):
         for i in range(0, len(newLines)):
             sx, sy = viewport._ndc_to_viewport(newLines[i][0], newLines[i][1]) # Faz a transformada da viewport
             vp_points.extend([sx, sy]) # Devolve as coordenadas, agora transformadas
-        if(len(vp_points) == 0): return # Se todo o poligono esta fora de vista, ignora
+        if(len(vp_points) == 0): return # Se t odo o poligono esta fora de vista, ignora
         viewport.create_polygon(vp_points, fill=self.color) # Renderiza o poligono
 
 class BezierCurve(Shape2D):
@@ -94,12 +97,16 @@ class BezierCurve(Shape2D):
         # Se não houver pelo menos 2 pontos de controle, não há como desenhar curva
         if n < 1:
             return
-            
+
+        previous = (-1, -1) # Sinaliza que o primeiro ponto nao foi inicializado
+        segments = 1 # Quantidade de segmentos da curva
+        previousCutoff = False # Se a ultima reta foi cortada
+
         # Avalia a curva ao longo do parâmetro 't' de 0.0 a 1.0
         for i in range(self.resolution + 1):
             t = i / self.resolution
             px, py = 0.0, 0.0
-            
+
             # Algoritmo Baseado no Polinômio de Bernstein
             for j in range(n + 1):
                 # Coeficiente Binomial (Combinação)
@@ -112,10 +119,45 @@ class BezierCurve(Shape2D):
                 py += bernstein * self.cord_matrix_ndc[j, 1]
             
             # Envia a coordenada Normalizada gerada para os Pixels da Tela
-            sx, sy = viewport._ndc_to_viewport(px, py)
-            pontos_tela.extend([sx, sy])
+
+            if(previous[0] != -1 or previous[1] != -1): # Se nao e o primeiro ponto
+                clip0, clip1 = viewport.clippingTool.clippingAlgorithm(previous, (px, py)) # Roda o clipping
+                if(clip0 != (0, 0) or clip1 != (0, 0)): # Se pelo menos um dos pontos esta dentro da viewport
+                    if(previousCutoff): # Se a ultima reta foi cortada
+                        previousCutoff = False
+                        segments += 1 # Aumenta a quantidade de segmentos
+
+                    if(abs(clip0[0] - previous[0]) >= 0.001 or abs(clip0[1] - previous[1]) > 0.001): # Se o primeiro ponto recebeu clipping, abs e usado por causa de imprecisoes de ponto flutuante fazendo os dois valores serem diferentes por < 10e-17
+                        sx0, sy0 = viewport._ndc_to_viewport(clip0[0], clip0[1])# Transforma e
+                        pontos_tela.extend([sx0, sy0])                          # adiciona ele
+
+                    sx0, sy0 = viewport._ndc_to_viewport(clip1[0], clip1[1])    # Transforma e
+                    pontos_tela.extend([sx0, sy0])                              # adiciona o segundo ponto
+
+                    if(abs(clip1[0] - px) >= 0.001 or abs(clip1[1] - py) >= 0.001): # Se o segundo ponto recebeu clipping
+                        pontos_tela.extend([-1]) # Adiciona um marcador
+                        previousCutoff = True    # Marca que a ultima reta foi cortada
+
+            elif(abs(px) <= 1 and abs(py) <= 1): # Se e o primeiro ponto e ele esta dentro da viewport
+                sx, sy = viewport._ndc_to_viewport(px, py)  # Transforma e
+                pontos_tela.extend([sx, sy])                # adiciona ele
+                previous = (px, py) # Coloca ele como o primeiro
             
         # Desenha a curva conectando os pontos de resolução
-        if len(pontos_tela) >= 4:
-            viewport.create_line(pontos_tela, fill=self.color, width=2)
-        
+        if len(pontos_tela) >= 4 + segments: # Se ha pontos o suficiente para desenhar uma linha
+            pontos_segmentos = self.splitAt(pontos_tela, -1) # Separa os segmentos utilizando o marcador
+            for k in range(0, len(pontos_segmentos)):   # Para t odo segmento
+                if (len(pontos_segmentos[k]) >= 4):     # Se tem pontos o suficiente
+                    viewport.create_line(pontos_segmentos[k], fill=self.color, width=2) # Desenha ele
+
+    def splitAt(self, list, value): # Utilizado para separar as listas de pontos de cada segmento
+        lists = []
+        lists.append([])
+        previous_list = 0
+        for i in range(0, len(list)):
+            if(list[i] != value):
+                lists[previous_list].append(list[i])
+            else:
+                previous_list += 1
+                lists.append([])
+        return lists
