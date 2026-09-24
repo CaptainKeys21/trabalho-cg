@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from numpy.f2py.crackfortran import previous_context
-
 if TYPE_CHECKING:
     from views.Viewport import Viewport
 
