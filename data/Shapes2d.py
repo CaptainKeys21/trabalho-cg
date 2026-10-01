@@ -159,3 +159,61 @@ class BezierCurve(Shape2D):
                 previous_list += 1
                 lists.append([])
         return lists
+
+class BSplineCurve(Shape2D):
+    def __init__(self, name: str, cords: list[tuple[float, float]], color: str = "#000000"):
+        super().__init__(name, cords, color)
+        self.resolution = 1000
+
+    def forward_diff(self, x, dx, ddx, dddx, y, dy, ddy, dddy) -> list[tuple[float, float]]:
+        segment = np.zeros((self.resolution, 2))
+
+        P = np.array([x, y], dtype=float)
+        dP = np.array([dx, dy], dtype=float)
+        ddP = np.array([ddx, ddy], dtype=float)
+        dddP = np.array([dddx, dddy], dtype=float)
+
+        segment = P
+
+        for i in range(1, self.resolution):
+            P += dP
+            dP += ddP
+            ddP += dddP
+
+            segment[i] = P
+
+        return segment.tolist()
+
+    def draw(self, viewport: Viewport):
+        if self.cord_matrix_ndc.shape[0] < 4:
+            return
+
+        # Matriz B-Spline
+        MBS = np.array([
+            [-1/6,  1/2, -1/2, 1/6],
+            [ 1/2, -1.0,  1/2, 0.0],
+            [-1/2,  0.0,  1/2, 0.0],
+            [ 1/6,  2/3,  1/6, 0.0]
+        ])
+
+        delta = 1 / self.resolution
+
+        E = np.array([
+            [0, 0, 0, 1],
+            [delta**3, delta**2, delta, 0],
+            [6 * (delta**3), 2 * (delta**2), 0, 0],
+            [6 * (delta**3), 0, 0, 0]
+        ])
+
+        EMBS = E @ MBS
+
+        for i in range(self.cord_matrix_ndc.shape[0] - 3):
+            G = self.cord_matrix_ndc[i:i+4,:]
+
+            D = EMBS @ G
+
+            x, dx, ddx, dddx = D[:, 0]
+            y, dy, ddy, dddy = D[:, 1]
+
+            segment = self.forward_diff(x, dx, ddx, dddx, y, dy, ddy, dddy)
+            viewport.create_line(segment, fill=self.color, width=2)
