@@ -163,19 +163,19 @@ class BezierCurve(Shape2D):
 class BSplineCurve(Shape2D):
     def __init__(self, name: str, cords: list[tuple[float, float]], color: str = "#000000"):
         super().__init__(name, cords, color)
-        self.resolution = 1000
+        self.resolution = 50
 
-    def forward_diff(self, x, dx, ddx, dddx, y, dy, ddy, dddy) -> list[tuple[float, float]]:
-        segment = np.zeros((self.resolution, 2))
+    def forward_diff(self, x, dx, ddx, dddx, y, dy, ddy, dddy) -> list[list[float]]:
+        segment = np.zeros((self.resolution + 1, 2))
 
         P = np.array([x, y], dtype=float)
         dP = np.array([dx, dy], dtype=float)
         ddP = np.array([ddx, ddy], dtype=float)
         dddP = np.array([dddx, dddy], dtype=float)
 
-        segment = P
+        segment[0] = P
 
-        for i in range(1, self.resolution):
+        for i in range(1, self.resolution + 1):
             P += dP
             dP += ddP
             ddP += dddP
@@ -215,5 +215,14 @@ class BSplineCurve(Shape2D):
             x, dx, ddx, dddx = D[:, 0]
             y, dy, ddy, dddy = D[:, 1]
 
-            segment = self.forward_diff(x, dx, ddx, dddx, y, dy, ddy, dddy)
-            viewport.create_line(segment, fill=self.color, width=2)
+            segment_ndc = self.forward_diff(x, dx, ddx, dddx, y, dy, ddy, dddy)
+
+            pontos_tela = []
+            for nx, ny in segment_ndc:
+                sx, sy = viewport._ndc_to_viewport(nx,ny)
+                pontos_tela.extend([sx, sy])
+
+            if len(pontos_tela) >= 4:
+                viewport.create_line(pontos_tela, fill=self.color, width=2)
+            
+            
