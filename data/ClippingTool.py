@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import Tuple, List
 
-
 class Directions(Enum):
     RIGHT = 2
     LEFT = 1
@@ -233,3 +232,37 @@ class ClippingTool:
                     count -= 1
             reg = self.region(points[i])
         return (count != 0) and (self.region(points[len(points) - 1]) & self.region(points[0]) != 0)
+
+    def clipCurve(self, points: List[tuple[float, float]], viewport):
+        previous = (-1, -1)  # Sinaliza que o primeiro ponto nao foi inicializado
+        segments = 1  # Quantidade de segmentos da curva
+        previousCutoff = False # Se a ultima reta foi cortada
+
+        pontos_tela = []
+
+        for nx, ny in points:
+            if (previous[0] != -1 or previous[1] != -1):  # Se nao e o primeiro ponto
+                clip0, clip1 = self.clippingAlgorithm(previous, (nx, ny))  # Roda o clipping
+                if (clip0 != (0, 0) or clip1 != (0, 0)):  # Se pelo menos um dos pontos esta dentro da viewport
+                    if (previousCutoff):  # Se a ultima reta foi cortada
+                        previousCutoff = False
+                        segments += 1  # Aumenta a quantidade de segmentos
+
+                    if (abs(clip0[0] - previous[0]) >= 0.001 or abs(clip0[1] - previous[1]) > 0.001):  # Se o primeiro ponto recebeu clipping, abs e usado por causa de imprecisoes de ponto flutuante fazendo os dois valores serem diferentes por < 10e-17
+                        sx0, sy0 = viewport._ndc_to_viewport(clip0[0], clip0[1])  # Transforma e
+                        pontos_tela.extend([sx0, sy0])  # adiciona ele
+
+                    sx0, sy0 = viewport._ndc_to_viewport(clip1[0], clip1[1])  # Transforma e
+                    pontos_tela.extend([sx0, sy0])  # adiciona o segundo ponto
+
+                    if (abs(clip1[0] - nx) >= 0.001 or
+                            abs(clip1[1] - ny) >= 0.001):  # Se o segundo ponto recebeu clipping
+                        pontos_tela.extend([None])  # Adiciona um marcador
+                        previousCutoff = True  # Marca que a ultima reta foi cortada
+
+            elif (abs(nx) <= 1 and abs(ny) <= 1):  # Se e o primeiro ponto e ele esta dentro da viewport
+                sx, sy = viewport._ndc_to_viewport(nx, ny)  # Transforma e
+                pontos_tela.extend([sx, sy])  # adiciona ele
+                previous = (nx, ny)  # Coloca ele como o primeiro
+
+        return pontos_tela, segments
