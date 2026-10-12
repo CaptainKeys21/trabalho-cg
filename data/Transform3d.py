@@ -1,6 +1,7 @@
 import numpy as np
 
 from data.Shapes2d import Shape2D
+from data.Shapes3d import Window3D
 from data.WindowData import WindowData
 
 class Transform3d:
@@ -12,8 +13,20 @@ class Transform3d:
         self.matrix = np.identity(3)
 
     @staticmethod
-    def window_to_ndc(wData: WindowData) -> np.ndarray:
-        pass
+    def window_to_ndc(window: Window3D) -> np.ndarray:
+        # dx = wData.width()
+        # dy = wData.height()
+
+        cx, cy, cz = window.center()
+
+        t = Transform3d()
+        t.translation(-cx, -cy, -cz)
+        t.rotationX(-window.rotationX)
+        t.rotationY(-window.rotationY)
+
+        # t.scale(2.0 / window.width(), 2.0 / window.height()) # ???
+
+        return t.matrix
 
     def translation(self, dx: float, dy: float, dz: float) -> 'Transform3d':
         res = np.array([
