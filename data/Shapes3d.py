@@ -18,9 +18,21 @@ class Shape3D(ABC):
         # Coordenadas Normalizadas, sera preenchido depois
         self.cord_matrix_ndc = np.zeros_like(self.cord_matrix_world)
 
+        self.drawmode_perspective = False
+
     @abstractmethod
-    def draw(self, viewport: Viewport):
+    def drawOrtogonal(self, viewport: Viewport):
         pass
+
+    @abstractmethod
+    def drawPerspective(self, viewport: Viewport):
+        pass
+
+    def draw(self, viewport: Viewport):
+        if self.drawmode_perspective:
+            self.drawPerspective(viewport)
+        else:
+            self.drawOrtogonal(viewport)
 
     def transform(self, matrix: np.ndarray):
         self.cord_matrix_world = self.cord_matrix_world @ matrix
@@ -33,7 +45,17 @@ class Shape3D(ABC):
 class Point3d(Shape3D):
     def __init__(self, name: str, cords: list[tuple[float, float]], color: str = "#000000"):
         super().__init__(name, cords, color)
+        self.radius = 2
 
+    def drawOrtogonal(self, viewport: Viewport):
+        x_vp, y_vp = viewport._ndc_to_viewport(*self.cord_matrix_ndc[0][:2])
+        viewport.create_oval(
+            x_vp - self.radius,
+            y_vp - self.radius,
+            x_vp + self.radius,
+            y_vp + self.radius,
+            fill=self.color
+        )
 
 class Window3D(Shape3D):
     def __init__(self, name: str, topRight, topLeft, bottomLeft, bottomRight, color: str = "#000000"):
@@ -51,3 +73,17 @@ class Window3D(Shape3D):
 
     def width(self):
         return abs(self.topRight[0] - self.topLeft[0])
+
+class Polygon3D(Shape3D):
+    def __init__(self, name: str, cords: list[tuple[float, float]], vertices: list[tuple[float, float]], color: str = "#000000"):
+        super().__init__(name, cords, color)
+        self.vertices = vertices
+
+    def drawOrtogonal(self, viewport: Viewport):
+        for point0, point1 in self.vertices:
+            x_vp0, y_vp0 = viewport._ndc_to_viewport(*self.cord_matrix_ndc[point0][:2])
+            x_vp1, y_vp1 = viewport._ndc_to_viewport(*self.cord_matrix_ndc[point1][:2])
+
+            clipped0, clipped1 = viewport.clippingTool.clippingAlgorithm((x_vp0, y_vp0), (x_vp1, y_vp1))
+            if not (clipped0[0] == 0 and clipped0[1] == 0 and clipped1[0] == 0 and clipped1[1] == 0):
+                viewport.create_line(clipped0[0], clipped0[1], clipped1[0], clipped1[1])
