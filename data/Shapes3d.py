@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 class Shape3D(ABC):
-    def __init__(self, name: str, cords: list[tuple[float, float]], color: str = "#000000"):
+    def __init__(self, name: str, cords: list[tuple[float, float, float]], color: str = "#000000"):
         self.name = name
         self.color = color
 
@@ -20,11 +20,11 @@ class Shape3D(ABC):
 
         self.drawmode_perspective = False
 
-    @abstractmethod
+    #@abstractmethod # Removido abstract pois nao implementei perspectiva ainda
     def drawOrtogonal(self, viewport: Viewport):
         pass
 
-    @abstractmethod
+    #@abstractmethod # Removido abstract pois nao implementei perspectiva ainda
     def drawPerspective(self, viewport: Viewport):
         pass
 
@@ -39,11 +39,11 @@ class Shape3D(ABC):
 
     def center(self) -> tuple[float, float, float]:
         "Equivalente a média aritimética das coordenadas (slide 46 - 1.2)"
-        cx, cy, cz = np.mean(self.cord_matrix_world[:, :4], axis=0)
+        cx, cy, cz = np.mean(self.cord_matrix_world[:, :3], axis=0)
         return float(cx), float(cy), float(cz)
 
 class Point3d(Shape3D):
-    def __init__(self, name: str, cords: list[tuple[float, float]], color: str = "#000000"):
+    def __init__(self, name: str, cords: list[tuple[float, float, float]], color: str = "#000000"):
         super().__init__(name, cords, color)
         self.radius = 2
 
@@ -75,15 +75,21 @@ class Window3D(Shape3D):
         return abs(self.topRight[0] - self.topLeft[0])
 
 class Polygon3D(Shape3D):
-    def __init__(self, name: str, cords: list[tuple[float, float]], vertices: list[tuple[float, float]], color: str = "#000000"):
+    def __init__(self, name: str, cords: list[tuple[float, float, float]], vertices: list[tuple[float, float]], color: str = "#000000"):
         super().__init__(name, cords, color)
         self.vertices = vertices
 
     def drawOrtogonal(self, viewport: Viewport):
+        print("self: ", self.cord_matrix_ndc)
         for point0, point1 in self.vertices:
-            x_vp0, y_vp0 = viewport._ndc_to_viewport(*self.cord_matrix_ndc[point0][:2])
-            x_vp1, y_vp1 = viewport._ndc_to_viewport(*self.cord_matrix_ndc[point1][:2])
+            x_vp0, y_vp0 = self.cord_matrix_ndc[point0][:2]
+            x_vp1, y_vp1 = self.cord_matrix_ndc[point1][:2]
 
             clipped0, clipped1 = viewport.clippingTool.clippingAlgorithm((x_vp0, y_vp0), (x_vp1, y_vp1))
+
             if not (clipped0[0] == 0 and clipped0[1] == 0 and clipped1[0] == 0 and clipped1[1] == 0):
-                viewport.create_line(clipped0[0], clipped0[1], clipped1[0], clipped1[1])
+
+                clipped0x, clipped0y = viewport._ndc_to_viewport(clipped0[0], clipped0[1])
+                clipped1x, clipped1y = viewport._ndc_to_viewport(clipped1[0], clipped1[1])
+
+                viewport.create_line(clipped0x, clipped0y, clipped1x, clipped1y)

@@ -10,7 +10,7 @@ class Transform3d:
     """
 
     def __init__(self):
-        self.matrix = np.identity(3)
+        self.matrix = np.identity(4)
 
     @staticmethod
     def window_to_ndc(window: Window3D) -> np.ndarray:
@@ -24,7 +24,7 @@ class Transform3d:
         t.rotationX(-window.rotationX)
         t.rotationY(-window.rotationY)
 
-        # t.scale(2.0 / window.width(), 2.0 / window.height()) # ???
+        t.scale(2.0 / window.width(), 2.0 / window.height(), 2.0 / window.width()) # ???
 
         return t.matrix
 

@@ -1,15 +1,19 @@
 from tkinter import Canvas
 
 from data.ClippingTool import ClippingTool
+from data.Transform3d import Transform3d
 from data.ViewportData import ViewportData
 from data.WindowData import WindowData
 from data.Shapes2d import Shape2D
+from data.Shapes3d import Window3D, Shape3D, Point3d, Polygon3D
 from data.Transform2d import Transform2d
 from data.ObjConverter import ObjConverter
+
 class Viewport(Canvas):
     def __init__(self, parent):
         self.vpData = ViewportData(x_min=0, y_min=0, x_max=600, y_max=600) # As coordenadas mínimas não podem ser menores que 0
         self.wData = WindowData(x_min=-250, y_min=-250, x_max=250, y_max=250)
+        self.wObject = Window3D("Window", (250, 250, 0), (-250, 250, 0), (-250, -250, 0), (250, -250, 0)) # Inicializacao da window como objeto 3d no mundo
         self.clippingTool = ClippingTool(-1, 1, -1, 1)
         super().__init__(
             parent, 
@@ -20,10 +24,21 @@ class Viewport(Canvas):
         )
 
         # Armazenamento de formas (em coordenadas de mundo)
-        self.shapes: list[Shape2D] = []
+        self.shapes = []
+        # self.add_shape3D(Point3d("test", [(100, 5, 0)]))
+        self.add_shape3D(Polygon3D("test2", [(-100, -100, 100), (100, -100, 100), (100, 100, 100), (-100, 100, 100),
+                                                        (-100, -100, 200), (100, -100, 200), (100, 100, 200), (-100, 100, 200)],
+                                                        [(0, 1), (1, 2), (2, 3), (3, 0), (0, 4), (1, 5), (2, 6), (3, 7),
+                                                         (4, 5), (5, 6), (6, 7), (7, 4)]))
 
-        self._draw_crosshair()
-        self._draw_window_border()
+        # self.add_shape3D(Polygon3D("test3", [(-200, -200, 100), (200, -200, 100), (200, 200, 100), (-200, 200, 100), #Fiz parecer perspectiva, mas nao e
+        #                                                 (-100, -100, 200), (100, -100, 200), (100, 100, 200), (-100, 100, 200)],
+        #                                                 [(0, 1), (1, 2), (2, 3), (3, 0), (0, 4), (1, 5), (2, 6), (3, 7),
+        #                                                  (4, 5), (5, 6), (6, 7), (7, 4)]))
+        self.render(True)
+
+        # self._draw_crosshair()
+        # self._draw_window_border()
 
     def _ndc_to_viewport(self, x_ndc: float, y_ndc: float) -> tuple[float, float]:
         sx = self.vpData.x_min + ((x_ndc + 1.0) / 2.0) * self.vpData.width()
@@ -31,8 +46,11 @@ class Viewport(Canvas):
 
         return sx, sy
 
-    def update_ndc_display_file(self):
-        matrix_ndc = Transform2d.window_to_ndc(self.wData)
+    def update_ndc_display_file(self, threedee = False): # Por padrao, 2D
+        if not threedee:
+            matrix_ndc = Transform2d.window_to_ndc(self.wData)
+        else:
+            matrix_ndc = Transform3d.window_to_ndc(self.wObject)
 
         for shape in self.shapes:
             shape.cord_matrix_ndc = shape.cord_matrix_world @ matrix_ndc
@@ -41,6 +59,16 @@ class Viewport(Canvas):
         """Transformada de viewport (slide 28 - 1.1)"""
         u = (xw - self.wData.x_min) / self.wData.width()
         v = (yw - self.wData.y_min) / self.wData.height()
+
+        x_vp = u * self.vpData.width()
+        y_vp = (1 - v) * self.vpData.height()
+
+        return x_vp, y_vp
+
+    def _3Dworld_to_viewport(self, xw: float, yw: float) -> tuple[float, float]: # Nao utilizado
+        """Transformada de viewport (slide 28 - 1.1)"""
+        u = (xw - self.wObject.bottomLeft[0]) / self.wObject.width()
+        v = (yw - self.wObject.bottomLeft[1]) / self.wObject.height()
 
         x_vp = u * self.vpData.width()
         y_vp = (1 - v) * self.vpData.height()
@@ -77,16 +105,20 @@ class Viewport(Canvas):
         self.shapes.append(shape)
         self.render()
 
-    def render(self):
+    def add_shape3D(self, shape: Shape3D):
+        self.shapes.append(shape)
+        self.render()
+
+    def render(self, threedee = True): # Mudei o parao para 3D so para testar
         self.delete("all")
 
-        self.update_ndc_display_file()
+        self.update_ndc_display_file(threedee)
 
         for shape in self.shapes:
             shape.draw(self)
 
-        self._draw_crosshair()
-        self._draw_window_border()
+        # self._draw_crosshair()
+        # self._draw_window_border()
 
     def pan(self, dx: float, dy: float):
         self.wData.x_min += dx
