@@ -39,25 +39,25 @@ class SideMenu3D(tk.Frame):
 
         # Scaling
         self.scaling, self.scalFrame = self._create_xyz_section(
-            menu, "Scaling", ("1", "1", "1")
+            menu, "Scaling", ("1", "1", "1"), double=True
         )
 
         # Seleção do Pivô de Escalonamento
-        self.var_tipo_rot = tk.StringVar(value="centro")
-        # tk.Radiobutton(self.scalFrame, text="Centro do Objeto", variable=self.var_tipo_rot, value="centro").grid(row=1, column=0)
-        # tk.Radiobutton(self.scalFrame, text="Origem do Mundo (0,0)", variable=self.var_tipo_rot, value="origem").grid(row=2, column=0)
-        # tk.Radiobutton(self.scalFrame, text="Ponto Arbitrário", variable=self.var_tipo_rot, value="arbitrario").grid(row=3, column=0)
+        self.var_tipo_scal = tk.StringVar(value="centro")
+        tk.Radiobutton(self.scalFrame, text="Centro do Objeto", variable=self.var_tipo_scal, value="centro").grid(row=1, column=0, columnspan=6)
+        tk.Radiobutton(self.scalFrame, text="Origem do Mundo (0,0)", variable=self.var_tipo_scal, value="origem").grid(row=2, column=0, columnspan=6)
+        tk.Radiobutton(self.scalFrame, text="Ponto Arbitrário", variable=self.var_tipo_scal, value="arbitrario").grid(row=3, column=0, columnspan=6)
 
         # Rotation
         self.rotation, self.rotFrame = self._create_xyz_section(
-            menu, "Rotation (degrees)", ("0", "0", "0")
+            menu, "Rotation (degrees)", ("0", "0", "0"), double=True
         )
 
         # Seleção do Pivô de Rotação
         self.var_tipo_rot = tk.StringVar(value="centro")
-        tk.Radiobutton(self.rotFrame, text="Centro do Objeto", variable=self.var_tipo_rot, value="centro")
-        tk.Radiobutton(self.rotFrame, text="Origem do Mundo (0,0)", variable=self.var_tipo_rot, value="origem")
-        tk.Radiobutton(self.rotFrame, text="Ponto Arbitrário", variable=self.var_tipo_rot, value="arbitrario")
+        tk.Radiobutton(self.rotFrame, text="Centro do Objeto", variable=self.var_tipo_rot, value="centro").grid(row=1, column=0, columnspan=6)
+        tk.Radiobutton(self.rotFrame, text="Origem do Mundo (0,0)", variable=self.var_tipo_rot, value="origem").grid(row=2, column=0, columnspan=6)
+        tk.Radiobutton(self.rotFrame, text="Ponto Arbitrário", variable=self.var_tipo_rot, value="arbitrario").grid(row=3, column=0, columnspan=6)
 
         tk.Button(
             menu, text="Apply Transformations",
@@ -82,7 +82,7 @@ class SideMenu3D(tk.Frame):
 
         self.update_list_box()
 
-    def _create_xyz_section(self, parent, title, defaults):
+    def _create_xyz_section(self, parent, title, defaults, double = False):
         frame = tk.LabelFrame(parent, text=title, padx=5, pady=5)
         frame.pack(fill="x", pady=5)
 
@@ -98,6 +98,18 @@ class SideMenu3D(tk.Frame):
             entry.grid(row=0, column=i * 2 + 1, padx=2)
 
             entries[axis] = entry
+
+        if(double):
+            for i, axis in enumerate(("X2", "Y2", "Z2")):
+                tk.Label(frame, text=f"{axis}:").grid(
+                    row=4, column=i * 2, padx=2
+                )
+
+                entry = tk.Entry(frame, width=6)
+                entry.insert(0, 0)
+                entry.grid(row=4, column=i * 2 + 1, padx=2)
+
+                entries[axis] = entry
 
         return entries, frame
 
@@ -133,7 +145,31 @@ class SideMenu3D(tk.Frame):
         if shape is None:
             return
 
+        # print(shape.center())
+
         try:
+            scalingOffset = None
+            # print(self.var_tipo_scal.get())
+            if (self.var_tipo_scal.get() != "origem"):
+                if(self.var_tipo_scal.get() != "centro"):
+                    scalingOffset = [
+                        float(self.scaling[a].get())
+                        for a in ("X2", "Y2", "Z2")
+                    ]
+                else: scalingOffset = shape.center()
+
+            rotationOffset = None
+            # print(self.var_tipo_rot.get())
+            if (self.var_tipo_rot.get() != "origem"):
+                if self.var_tipo_scal.get() != "centro":
+                    rotationOffset = [
+                        float(self.rotation[a].get())
+                        for a in ("X2", "Y2", "Z2")
+                    ]
+                else:
+                    rotationOffset = shape.center()
+                    print(shape.center())
+
             translation = [
                 float(self.translation[a].get())
                 for a in ("X", "Y", "Z")
@@ -159,10 +195,20 @@ class SideMenu3D(tk.Frame):
             transform = Transform3d()
 
             transform.translation(*translation)
+
+            if(scalingOffset is not None):
+                transform.translation(-scalingOffset[0], -scalingOffset[1], -scalingOffset[2])
             transform.scale(*scaling)
+            if(scalingOffset is not None):
+                transform.translation(scalingOffset[0], scalingOffset[1], scalingOffset[2])
+
+            if(rotationOffset is not None):
+                transform.translation(-scalingOffset[0], -scalingOffset[1], -scalingOffset[2])
             transform.rotationX(rotation[0])
             transform.rotationY(rotation[1])
             transform.rotationZ(rotation[2])
+            if(rotationOffset is not None):
+                transform.translation(scalingOffset[0], scalingOffset[1], scalingOffset[2])
 
             transform.apply(shape)
             self.viewport.render()
