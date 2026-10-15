@@ -25,6 +25,7 @@ class Viewport(Canvas):
 
         # Armazenamento de formas (em coordenadas de mundo)
         self.shapes = []
+        self.add_shape3D(self.wObject)
         # self.add_shape3D(Point3d("test", [(100, 5, 0)]))
         self.add_shape3D(Polygon3D("test2", [(-100, -100, 100), (100, -100, 100), (100, 100, 100), (-100, 100, 100),
                                                         (-100, -100, 200), (100, -100, 200), (100, 100, 200), (-100, 100, 200)],
@@ -38,7 +39,7 @@ class Viewport(Canvas):
         self.render(True)
 
         # self._draw_crosshair()
-        # self._draw_window_border()
+        self._draw_window_border()
 
     def _ndc_to_viewport(self, x_ndc: float, y_ndc: float) -> tuple[float, float]:
         sx = self.vpData.x_min + ((x_ndc + 1.0) / 2.0) * self.vpData.width()
@@ -118,7 +119,7 @@ class Viewport(Canvas):
             shape.draw(self)
 
         # self._draw_crosshair()
-        # self._draw_window_border()
+        self._draw_window_border()
 
     def pan(self, dx: float, dy: float):
         self.wData.x_min += dx

@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+from views.SideMenu3D import SideMenu3D
 from views.Viewport import Viewport
 from views.SideMenu import SideMenu
 import numpy as np
@@ -22,7 +23,8 @@ class App(tk.Tk):
         viewport = Viewport(container)
         viewport.pack(side="right", padx=20, pady=20)
 
-        painel = SideMenu(container, viewport)
+        # painel = SideMenu(container, viewport)
+        painel = SideMenu3D(container, viewport)
         painel.pack(side="left", fill="y", padx=5, pady=5)
 
 if __name__ == "__main__":
