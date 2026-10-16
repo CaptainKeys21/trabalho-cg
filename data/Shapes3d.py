@@ -136,22 +136,20 @@ class Polygon3D(Shape3D):
                     viewport.create_line(clipped0x, clipped0y, clipped1x, clipped1y)
 
     def drawPerspective(self, viewport: Viewport):
-        # print("render")
         for point0, point1 in self.vertices:
-            x_vp0 = self.cord_matrix_ndc_perspective[point0][0]/(self.cord_matrix_ndc_perspective[point0][2]/viewport.perspective_window_distance)
-            y_vp0 = self.cord_matrix_ndc_perspective[point0][1]/(self.cord_matrix_ndc_perspective[point0][2]/viewport.perspective_window_distance)
-            x_vp1 = self.cord_matrix_ndc_perspective[point1][0]/(self.cord_matrix_ndc_perspective[point1][2]/viewport.perspective_window_distance)
-            y_vp1 = self.cord_matrix_ndc_perspective[point1][1]/(self.cord_matrix_ndc_perspective[point1][2]/viewport.perspective_window_distance)
+            z_vp0 = max(float(self.cord_matrix_ndc_perspective[point0][2]), 1e-9)
+            z_vp1 = max(float(self.cord_matrix_ndc_perspective[point1][2]), 1e-9)
 
-            if not(self.cord_matrix_ndc_perspective[point0][2] < 0 and self.cord_matrix_ndc_perspective[point1][2] < 0):
-                # print("=============================================================")
-                # print(self.cord_matrix_ndc_perspective[point0], self.cord_matrix_ndc_perspective[point1])
+            x_vp0 = self.cord_matrix_ndc_perspective[point0][0] * viewport.perspective_window_distance/z_vp0
+            y_vp0 = self.cord_matrix_ndc_perspective[point0][1] * viewport.perspective_window_distance/z_vp0
+            x_vp1 = self.cord_matrix_ndc_perspective[point1][0] * viewport.perspective_window_distance/z_vp1
+            y_vp1 = self.cord_matrix_ndc_perspective[point1][1] * viewport.perspective_window_distance/z_vp1
+
+            if not(self.cord_matrix_ndc_perspective[point0][2] <= 0 and self.cord_matrix_ndc_perspective[point1][2] <= 0):
                 clipped0, clipped1 = viewport.clippingTool.clippingAlgorithm((x_vp0, y_vp0), (x_vp1, y_vp1))
 
                 if not (clipped0[0] == 0 and clipped0[1] == 0 and clipped1[0] == 0 and clipped1[1] == 0):
-
                     clipped0x, clipped0y = viewport._ndc_to_viewport(clipped0[0], clipped0[1])
                     clipped1x, clipped1y = viewport._ndc_to_viewport(clipped1[0], clipped1[1])
-                    # print((clipped0x, clipped0y), (clipped1x, clipped1y))
 
                     viewport.create_line(clipped0x, clipped0y, clipped1x, clipped1y)

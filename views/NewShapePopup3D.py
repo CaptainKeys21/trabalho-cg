@@ -296,7 +296,6 @@ class NewShapePopup3D(tk.Toplevel):
                     )
 
                 edge_points = self.ent_edge_description.get().replace(' ', '').replace('(', '').replace(')', '') .split(',')
-                print(edge_points)
                 edges = []
                 for i in range(0, int(len(edge_points)/2)):
                     edges.append((int(edge_points[i * 2]), int(edge_points[i * 2 + 1])))
