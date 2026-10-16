@@ -222,7 +222,7 @@ class NewShapePopup3D(tk.Toplevel):
 
         return Point3D((x, y, z))
 
-    def _parse_vertices(self, offset):
+    def _parse_vertices(self, offset: Point3D):
         """
         Converte uma string como:
             0,0,0; 20,0,0; 10,20,10
@@ -230,7 +230,7 @@ class NewShapePopup3D(tk.Toplevel):
         em uma lista de pontos 3D, aplicando o deslocamento.
         """
 
-        ox, oy, oz = offset
+        ox, oy, oz = offset.asList()
         vertices = []
 
         raw_vertices = self.ent_custom.get().strip()
