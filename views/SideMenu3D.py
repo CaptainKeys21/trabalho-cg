@@ -1,4 +1,6 @@
+import math
 import tkinter as tk
+from math import sqrt, acos
 from tkinter import ttk
 from tkinter import filedialog
 
@@ -17,7 +19,34 @@ class SideMenu3D(tk.Frame):
         super().__init__(parent, **kwargs)
         self.viewport = viewport
 
-        menu = tk.Frame(self, padx=10, pady=10)
+        # há um canvas aqui para habilitar scroll no menu lateral
+        self.canvas = tk.Canvas(self, highlightthickness=0)
+        self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+
+        self.scrollable_frame = tk.Frame(self.canvas)
+        self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+
+        self.canvas.bind(
+            "<Configure>",
+            lambda e: self.canvas.itemconfig(self.canvas_window, width=e.width)
+        )
+
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        # Eventos da roda do mouse para rolar sem precisar clicar na barra
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)  # Windows/Mac
+        self.canvas.bind_all("<Button-4>", self._on_mousewheel)  # Linux (Scroll Up)
+        self.canvas.bind_all("<Button-5>", self._on_mousewheel)  # Linux (Scroll Down)
+
+        menu = tk.Frame(self.scrollable_frame, padx=10, pady=10)
         menu.pack(fill="both", expand=True)
 
         # Object selection
@@ -50,7 +79,7 @@ class SideMenu3D(tk.Frame):
 
         # Rotation
         self.rotation, self.rotFrame = self._create_xyz_section(
-            menu, "Rotation (degrees)", ("0", "0", "0"), double=True
+            menu, "Rotation (degrees)", ("0", "0", "0"), double=True, triple=True
         )
 
         # Seleção do Pivô de Rotação
@@ -58,6 +87,10 @@ class SideMenu3D(tk.Frame):
         tk.Radiobutton(self.rotFrame, text="Centro do Objeto", variable=self.var_tipo_rot, value="centro").grid(row=1, column=0, columnspan=6)
         tk.Radiobutton(self.rotFrame, text="Origem do Mundo (0,0)", variable=self.var_tipo_rot, value="origem").grid(row=2, column=0, columnspan=6)
         tk.Radiobutton(self.rotFrame, text="Ponto Arbitrário", variable=self.var_tipo_rot, value="arbitrario").grid(row=3, column=0, columnspan=6)
+        tk.Radiobutton(self.rotFrame, text="Eixo Arbitrário", variable=self.var_tipo_rot, value="arbitrario_eixo").grid(row=4, column=0, columnspan=6)
+        self.arbitrary_angle = (tk.Entry(self.rotFrame, width=6))
+        self.arbitrary_angle.grid(row=7, column=0, columnspan=6)
+        self.arbitrary_angle.insert(0, 0)
 
         tk.Button(
             menu, text="Apply Transformations",
@@ -82,7 +115,7 @@ class SideMenu3D(tk.Frame):
 
         self.update_list_box()
 
-    def _create_xyz_section(self, parent, title, defaults, double = False):
+    def _create_xyz_section(self, parent, title, defaults, double = False, triple = False):
         frame = tk.LabelFrame(parent, text=title, padx=5, pady=5)
         frame.pack(fill="x", pady=5)
 
@@ -102,12 +135,24 @@ class SideMenu3D(tk.Frame):
         if(double):
             for i, axis in enumerate(("X2", "Y2", "Z2")):
                 tk.Label(frame, text=f"{axis}:").grid(
-                    row=4, column=i * 2, padx=2
+                    row=5, column=i * 2, padx=2
                 )
 
                 entry = tk.Entry(frame, width=6)
                 entry.insert(0, 0)
-                entry.grid(row=4, column=i * 2 + 1, padx=2)
+                entry.grid(row=5, column=i * 2 + 1, padx=2)
+
+                entries[axis] = entry
+
+        if(triple):
+            for i, axis in enumerate(("X3", "Y3", "Z3")):
+                tk.Label(frame, text=f"{axis}:").grid(
+                    row=6, column=i * 2, padx=2
+                )
+
+                entry = tk.Entry(frame, width=6)
+                entry.insert(0, 0)
+                entry.grid(row=6, column=i * 2 + 1, padx=2)
 
                 entries[axis] = entry
 
@@ -145,11 +190,8 @@ class SideMenu3D(tk.Frame):
         if shape is None:
             return
 
-        # print(shape.center())
-
         try:
             scalingOffset = None
-            # print(self.var_tipo_scal.get())
             if (self.var_tipo_scal.get() != "origem"):
                 if(self.var_tipo_scal.get() != "centro"):
                     scalingOffset = [
@@ -159,16 +201,35 @@ class SideMenu3D(tk.Frame):
                 else: scalingOffset = shape.center()
 
             rotationOffset = None
-            # print(self.var_tipo_rot.get())
+            angle_0 = None
+            angle_1 = None
+
             if (self.var_tipo_rot.get() != "origem"):
-                if self.var_tipo_scal.get() != "centro":
+                if self.var_tipo_rot.get() == "arbitrario":
                     rotationOffset = [
                         float(self.rotation[a].get())
                         for a in ("X2", "Y2", "Z2")
                     ]
+                elif self.var_tipo_rot.get() == "arbitrario_eixo":
+                    point0 = [
+                        float(self.rotation[a].get())
+                        for a in ("X2", "Y2", "Z2")
+                    ]
+                    point1 = [
+                        float(self.rotation[a].get())
+                        for a in ("X3", "Y3", "Z3")
+                    ]
+                    rotationOffset = point0
+
+                    x0, y0, z0 = point0
+                    x1, y1, z1 = point1
+
+                    dx, dy, dz = x1 - x0, y1 - y0, z1 - z0
+
+                    angle_0 = math.degrees(math.atan2(dz, dx))
+                    angle_1 = math.degrees(math.atan2(dy, math.hypot(dx, dz)))
                 else:
                     rotationOffset = shape.center()
-                    print(shape.center())
 
             translation = [
                 float(self.translation[a].get())
@@ -203,12 +264,23 @@ class SideMenu3D(tk.Frame):
                 transform.translation(scalingOffset[0], scalingOffset[1], scalingOffset[2])
 
             if(rotationOffset is not None):
-                transform.translation(-scalingOffset[0], -scalingOffset[1], -scalingOffset[2])
-            transform.rotationX(rotation[0])
-            transform.rotationY(rotation[1])
-            transform.rotationZ(rotation[2])
+                transform.translation(-rotationOffset[0], -rotationOffset[1], -rotationOffset[2])
+            if(angle_0 is not None and angle_1 is not None):
+                transform.rotationX(-angle_0)
+                transform.rotationZ(-angle_1)
+
+            if(angle_0 is None and angle_1 is None):
+                transform.rotationX(rotation[0])
+                transform.rotationY(rotation[1])
+                transform.rotationZ(rotation[2])
+            else:
+                transform.rotationY(float(self.arbitrary_angle.get()))
+
+            if(angle_0 is not None and angle_1 is not None):
+                transform.rotationZ(angle_1)
+                transform.rotationX(angle_0)
             if(rotationOffset is not None):
-                transform.translation(scalingOffset[0], scalingOffset[1], scalingOffset[2])
+                transform.translation(rotationOffset[0], rotationOffset[1], rotationOffset[2])
 
             transform.apply(shape)
             self.viewport.render()
@@ -246,3 +318,11 @@ class SideMenu3D(tk.Frame):
         if filepath:
             self.viewport.import_obj(filepath)
             self.update_list_box()
+
+    def _on_mousewheel(self, event):
+        """Permite rolar o menu usando a rodinha do mouse."""
+        # Linux usa Button-4 (Cima) e Button-5 (Baixo)
+        if event.num == 4 or event.delta > 0:
+            self.canvas.yview_scroll(-1, "units")
+        elif event.num == 5 or event.delta < 0:
+            self.canvas.yview_scroll(1, "units")
