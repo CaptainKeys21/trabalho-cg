@@ -113,8 +113,13 @@ class SideMenu3D(tk.Frame):
         projection_frame.pack(fill="x", pady=2)
 
         self.var_tipo_projection = tk.StringVar(value="perspective")
-        tk.Radiobutton(projection_frame, text="Ortogonal", variable=self.var_tipo_projection, value="orthogonal", command=self.set_projection_type).pack(anchor="w")
-        tk.Radiobutton(projection_frame, text="Perspectiva", variable=self.var_tipo_projection, value="perspective", command=self.set_projection_type).pack(anchor="w")
+        tk.Radiobutton(projection_frame, text="Ortogonal", variable=self.var_tipo_projection, value="orthogonal", command=self.set_projection_type).grid(row=0, column=0, sticky="W", padx=5)
+        tk.Radiobutton(projection_frame, text="Perspectiva", variable=self.var_tipo_projection, value="perspective", command=self.set_projection_type).grid(row=1, column=0, sticky="W", padx=5)
+        tk.Label(projection_frame, text="Distância do centro de projeção: ").grid(row=2, column=0, padx=5)
+        self.projection_center_distance_entry = tk.Entry(projection_frame, width=6)
+        self.projection_center_distance_entry.grid(row=2, column=1, padx=5)
+        self.projection_center_distance_entry.insert(0, "1")
+        self.projection_center_distance_button = tk.Button(projection_frame, text="Aplicar distância", command=self.set_projection_center_distance).grid(row=3, column=0, padx=5)
 
 
         file_frame = tk.LabelFrame(menu, text="Arquivos", padx=5, pady=5)
@@ -149,7 +154,7 @@ class SideMenu3D(tk.Frame):
                 )
 
                 entry = tk.Entry(frame, width=6)
-                entry.insert(0, 0)
+                entry.insert(0, "0")
                 entry.grid(row=5, column=i * 2 + 1, padx=2)
 
                 entries[axis] = entry
@@ -161,7 +166,7 @@ class SideMenu3D(tk.Frame):
                 )
 
                 entry = tk.Entry(frame, width=6)
-                entry.insert(0, 0)
+                entry.insert(0, "0")
                 entry.grid(row=6, column=i * 2 + 1, padx=2)
 
                 entries[axis] = entry
@@ -313,9 +318,18 @@ class SideMenu3D(tk.Frame):
 
     def set_projection_type(self):
         perspective = self.var_tipo_projection.get() == "perspective"
+        estado_proj = "normal" if perspective else "disabled"
+        self.projection_center_distance_entry.config(state=estado_proj)
+        self.projection_center_distance_button.config(state=estado_proj)
+
         for shape in self.viewport.shapes:
             shape.setDrawmode(perspective)
 
+        self.viewport.render()
+
+    def set_projection_center_distance(self):
+        distance = self.projection_center_distance_entry.get()
+        self.viewport.perspective_window_distance = float(distance)
         self.viewport.render()
 
     def save_file(self):
