@@ -75,9 +75,9 @@ class Window3D(Shape3D):
         return abs(self.topRight[0] - self.topLeft[0])
 
 class Polygon3D(Shape3D):
-    def __init__(self, name: str, cords: list[tuple[float, float, float]], vertices: list[tuple[float, float]], color: str = "#000000"):
+    def __init__(self, name: str, cords: list[tuple[float, float, float]], edges: list[tuple[float, float]], color: str = "#000000"):
         super().__init__(name, cords, color)
-        self.vertices = vertices
+        self.vertices = edges
 
     def drawOrtogonal(self, viewport: Viewport):
         for point0, point1 in self.vertices:

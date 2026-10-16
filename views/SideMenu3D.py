@@ -6,7 +6,7 @@ from tkinter import filedialog
 
 from data.Shapes3d import Window3D
 from data.Transform3d import Transform3d
-from views.NewShapePopup import NewShapePopup
+from views.NewShapePopup3D import NewShapePopup3D
 
 # Parcialmente gerado por LLM (chat-GPT, modelo especifico desconhecido, very open, openAI)
 # prompt utilizado: "Using the TKinter library and the following code as base, generate an interface for transformation of 3D objects, considering that the window will also be a 3D object and thet it does not need special controls anymore, be brief."
@@ -178,7 +178,7 @@ class SideMenu3D(tk.Frame):
         return self.viewport.shapes[selection[0]]
 
     def open_create_new_shape(self):
-        NewShapePopup(
+        NewShapePopup3D(
             self.winfo_toplevel(),
             self.viewport,
             self.update_list_box

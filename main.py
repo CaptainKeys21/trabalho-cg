@@ -8,7 +8,7 @@ import numpy as np
 
 # Nota: A maioria das construções de interface foram feitas com IA, 
 # porque acredito que ficar passando raiva com o tkinter não faz parte da matéria
-# IA Usada: Gemini Pro 3.1
+# IA Usada: Gemini Pro 3.1, chatGPT (undisclosed model :/, not paying for that crap)
 # Prompts: Foram muitos em várias iterações de entrega, difícil enumerar todos.
 class App(tk.Tk):
     def __init__(self):
