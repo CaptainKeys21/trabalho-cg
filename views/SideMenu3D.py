@@ -107,6 +107,16 @@ class SideMenu3D(tk.Frame):
         tk.Radiobutton(clip_frame, text="Cohen-Sutherland", variable=self.var_tipo_clip, value="cohen-sutherland",
                        command=self.set_clipping_algorithm).pack(anchor="w")
 
+
+        # --- Selecao de algoritmo de clipping ---
+        projection_frame = tk.LabelFrame(menu, text="Tipo de projeção", padx=5, pady=5)
+        projection_frame.pack(fill="x", pady=2)
+
+        self.var_tipo_projection = tk.StringVar(value="perspective")
+        tk.Radiobutton(projection_frame, text="Ortogonal", variable=self.var_tipo_projection, value="orthogonal", command=self.set_projection_type).pack(anchor="w")
+        tk.Radiobutton(projection_frame, text="Perspectiva", variable=self.var_tipo_projection, value="perspective", command=self.set_projection_type).pack(anchor="w")
+
+
         file_frame = tk.LabelFrame(menu, text="Arquivos", padx=5, pady=5)
         file_frame.pack(fill="x", pady=10)
 
@@ -299,6 +309,13 @@ class SideMenu3D(tk.Frame):
         elif(algorithm == "cohen-sutherland"):
             self.viewport.clippingTool.set_clipping_algorithm_directional(self.viewport.clippingTool.clipLineCohenSutherlandDirectional)
             self.viewport.clippingTool.set_clipping_algorithm(self.viewport.clippingTool.clipLineCohenSutherland)
+        self.viewport.render()
+
+    def set_projection_type(self):
+        perspective = self.var_tipo_projection.get() == "perspective"
+        for shape in self.viewport.shapes:
+            shape.setDrawmode(perspective)
+
         self.viewport.render()
 
     def save_file(self):

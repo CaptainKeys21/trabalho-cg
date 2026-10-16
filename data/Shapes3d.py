@@ -48,11 +48,11 @@ class Shape3D(ABC):
 
         self.drawmode_perspective = True
 
-    #@abstractmethod # Removido abstract pois nao implementei perspectiva ainda
+    @abstractmethod
     def drawOrtogonal(self, viewport: Viewport):
         pass
 
-    #@abstractmethod # Removido abstract pois nao implementei perspectiva ainda
+    @abstractmethod
     def drawPerspective(self, viewport: Viewport):
         pass
 
@@ -69,6 +69,9 @@ class Shape3D(ABC):
         "Equivalente a média aritimética das coordenadas (slide 46 - 1.2)"
         cx, cy, cz = np.mean(self.cord_matrix_world[:, :3], axis=0)
         return float(cx), float(cy), float(cz)
+
+    def setDrawmode(self, perspective: bool):
+        self.drawmode_perspective = perspective
 
 class Point3DRender(Shape3D):
     def __init__(self, name: str, cords: list[Point3D], color: str = "#000000"):
@@ -113,6 +116,12 @@ class Window3D(Shape3D):
 
     def width(self):
         return sqrt((self.topRight.getX() - self.topLeft.getX()) ** 2 + (self.topRight.getZ() - self.topLeft.getZ()) ** 2)
+
+    def drawPerspective(self, viewport: Viewport):
+        pass
+
+    def drawOrtogonal(self, viewport: Viewport):
+        pass
 
 class Polygon3D(Shape3D):
     def __init__(self, name: str, cords: list[Point3D], edges: list[tuple[float, float]], color: str = "#000000"):
