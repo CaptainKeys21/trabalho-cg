@@ -15,6 +15,7 @@ class Viewport(Canvas):
         self.wData = WindowData(x_min=-250, y_min=-250, x_max=250, y_max=250)
         self.wObject = Window3D("Window", Point3D((250, 250, 0)), Point3D((-250, 250, 0)), Point3D((-250, -250, 0)), Point3D((250, -250, 0))) # Inicializacao da window como objeto 3d no mundo
         self.clippingTool = ClippingTool(-1, 1, -1, 1)
+        self.perspective_window_distance = 1
         super().__init__(
             parent, 
             bg="white",
@@ -43,13 +44,17 @@ class Viewport(Canvas):
         return sx, sy
 
     def update_ndc_display_file(self, threedee = False): # Por padrao, 2D
+        matrix_ndc_perspective = None
         if not threedee:
             matrix_ndc = Transform2d.window_to_ndc(self.wData)
         else:
             matrix_ndc = Transform3d.window_to_ndc(self.wObject)
+            matrix_ndc_perspective = Transform3d.window_to_ndc_perspective(self.wObject, self.perspective_window_distance)
 
         for shape in self.shapes:
             shape.cord_matrix_ndc = shape.cord_matrix_world @ matrix_ndc
+            if(matrix_ndc_perspective is not None):
+                shape.cord_matrix_ndc_perspective = shape.cord_matrix_world @ matrix_ndc_perspective
 
     def _world_to_viewport(self, xw: float, yw: float) -> tuple[float, float]:
         """Transformada de viewport (slide 28 - 1.1)"""

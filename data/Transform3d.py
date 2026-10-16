@@ -28,6 +28,23 @@ class Transform3d:
 
         return t.matrix
 
+    @staticmethod
+    def window_to_ndc_perspective(window: Window3D, distance:float) -> np.ndarray:
+        # dx = wData.width()
+        # dy = wData.height()
+
+        cx, cy, cz = window.center()
+
+        t = Transform3d()
+        t.translation(-cx, -cy, -cz)
+        t.rotationX(-window.rotationX)
+        t.rotationY(-window.rotationY)
+        t.translation(0, 0, distance)
+
+        t.scale(2.0 / window.width(), 2.0 / window.height(), 2.0 / window.width()) # ???
+
+        return t.matrix
+
     def translation(self, dx: float, dy: float, dz: float) -> 'Transform3d':
         res = np.array([
             [1.0, 0.0, 0.0, 0.0],
