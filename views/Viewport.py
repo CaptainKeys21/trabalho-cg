@@ -5,7 +5,7 @@ from data.Transform3d import Transform3d
 from data.ViewportData import ViewportData
 from data.WindowData import WindowData
 from data.Shapes2d import Shape2D
-from data.Shapes3d import Window3D, Shape3D, Point3d, Polygon3D
+from data.Shapes3d import Window3D, Shape3D, Point3D, Polygon3D
 from data.Transform2d import Transform2d
 from data.ObjConverter import ObjConverter
 
@@ -13,7 +13,7 @@ class Viewport(Canvas):
     def __init__(self, parent):
         self.vpData = ViewportData(x_min=0, y_min=0, x_max=600, y_max=600) # As coordenadas mínimas não podem ser menores que 0
         self.wData = WindowData(x_min=-250, y_min=-250, x_max=250, y_max=250)
-        self.wObject = Window3D("Window", (250, 250, 0), (-250, 250, 0), (-250, -250, 0), (250, -250, 0)) # Inicializacao da window como objeto 3d no mundo
+        self.wObject = Window3D("Window", Point3D((250, 250, 0)), Point3D((-250, 250, 0)), Point3D((-250, -250, 0)), Point3D((250, -250, 0))) # Inicializacao da window como objeto 3d no mundo
         self.clippingTool = ClippingTool(-1, 1, -1, 1)
         super().__init__(
             parent, 

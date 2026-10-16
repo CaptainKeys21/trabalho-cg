@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
+from math import sqrt
+from typing import TYPE_CHECKING, Tuple
 
 if TYPE_CHECKING:
     from views.Viewport import Viewport
@@ -7,13 +9,38 @@ if TYPE_CHECKING:
 from abc import ABC, abstractmethod
 import numpy as np
 
+
+class Point3D():
+    def __init__(self, tupl: Tuple[float, float, float]):
+        self.x = tupl[0]
+        self.y = tupl[1]
+        self.z = tupl[2]
+
+    def getX(self):
+        return self.x
+
+    def getY(self):
+        return self.y
+
+    def getZ(self):
+        return self.z
+
+    def asTuple(self):
+        return (self.x, self.y, self.z)
+
+    def asList(self):
+        return [self.x, self.y, self.z]
+
 class Shape3D(ABC):
-    def __init__(self, name: str, cords: list[tuple[float, float, float]], color: str = "#000000"):
+    def __init__(self, name: str, cords: list[Point3D], color: str = "#000000"):
         self.name = name
         self.color = color
 
         # Coordenadas de mundo
-        self.cord_matrix_world = np.array([[x, y, z, 1.0] for x, y, z in cords])
+        arr = []
+        for p in cords:
+            arr.append([p.getX(), p.getY(), p.getZ(), 1.0])
+        self.cord_matrix_world = np.array(arr)
 
         # Coordenadas Normalizadas, sera preenchido depois
         self.cord_matrix_ndc = np.zeros_like(self.cord_matrix_world)
@@ -42,8 +69,8 @@ class Shape3D(ABC):
         cx, cy, cz = np.mean(self.cord_matrix_world[:, :3], axis=0)
         return float(cx), float(cy), float(cz)
 
-class Point3d(Shape3D):
-    def __init__(self, name: str, cords: list[tuple[float, float, float]], color: str = "#000000"):
+class Point3DRender(Shape3D):
+    def __init__(self, name: str, cords: list[Point3D], color: str = "#000000"):
         super().__init__(name, cords, color)
         self.radius = 2
 
@@ -58,7 +85,7 @@ class Point3d(Shape3D):
         )
 
 class Window3D(Shape3D):
-    def __init__(self, name: str, topRight, topLeft, bottomLeft, bottomRight, color: str = "#000000"):
+    def __init__(self, name: str, topRight: Point3D, topLeft: Point3D, bottomLeft: Point3D, bottomRight: Point3D, color: str = "#000000"):
         super().__init__(name, [topRight, topLeft, bottomLeft, bottomRight], color)
         self.topRight = topRight
         self.topLeft = topLeft
@@ -69,13 +96,13 @@ class Window3D(Shape3D):
         self.rotationZ = 0
 
     def height(self):
-        return abs(self.topRight[1] - self.bottomRight[1])
+        return abs(self.topRight.getY() - self.bottomRight.getY())
 
     def width(self):
-        return abs(self.topRight[0] - self.topLeft[0])
+        return sqrt((self.topRight.getX() - self.topLeft.getX()) ** 2 + (self.topRight.getZ() - self.topLeft.getZ()) ** 2)
 
 class Polygon3D(Shape3D):
-    def __init__(self, name: str, cords: list[tuple[float, float, float]], edges: list[tuple[float, float]], color: str = "#000000"):
+    def __init__(self, name: str, cords: list[Point3D], edges: list[tuple[float, float]], color: str = "#000000"):
         super().__init__(name, cords, color)
         self.vertices = edges
 

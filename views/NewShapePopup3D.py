@@ -7,7 +7,8 @@ if TYPE_CHECKING:
 import tkinter as tk
 from tkinter import ttk, colorchooser
 
-from data.Shapes3d import Point3d, Polygon3D
+from data.Shapes3d import Point3DRender, Polygon3D, Point3D
+
 
 # Parcialmente gerado por LLM (chat-GPT, modelo especifico desconhecido, very open, openAI)
 # prompt utilizado: "Based on the following code, generate an alternate version of this custom TKinter class to only support 3D points and polygons. Polygons need an additional field for the description of their edges."
@@ -213,13 +214,13 @@ class NewShapePopup3D(tk.Toplevel):
         """Obtém o deslocamento inicial em 3D."""
 
         if self.var_pos.get() == "origem":
-            return 0.0, 0.0, 0.0
+            return Point3D((0.0, 0.0, 0.0))
 
         x = float(self.ent_x.get())
         y = float(self.ent_y.get())
         z = float(self.ent_z.get())
 
-        return x, y, z
+        return Point3D((x, y, z))
 
     def _parse_vertices(self, offset):
         """
@@ -258,7 +259,7 @@ class NewShapePopup3D(tk.Toplevel):
             )
 
             vertices.append(
-                (ox + px, oy + py, oz + pz)
+                Point3D((ox + px, oy + py, oz + pz))
             )
 
         if not vertices:
@@ -279,7 +280,7 @@ class NewShapePopup3D(tk.Toplevel):
             offset = self._parse_offset()
 
             if tipo == "Ponto 3D":
-                forma = Point3d(
+                forma = Point3DRender(
                     nome,
                     [offset],
                     color=self.selected_color
