@@ -119,8 +119,8 @@ class SideMenu3D(tk.Frame):
         self.projection_center_distance_entry = tk.Entry(projection_frame, width=6)
         self.projection_center_distance_entry.grid(row=2, column=1, padx=5)
         self.projection_center_distance_entry.insert(0, "1")
-        self.projection_center_distance_button = tk.Button(projection_frame, text="Aplicar distância", command=self.set_projection_center_distance).grid(row=3, column=0, padx=5)
-
+        self.projection_center_distance_button = tk.Button(projection_frame, text="Aplicar distância", command=self.set_projection_center_distance)
+        self.projection_center_distance_button.grid(row=3, column=0, padx=5)
 
         file_frame = tk.LabelFrame(menu, text="Arquivos", padx=5, pady=5)
         file_frame.pack(fill="x", pady=10)
