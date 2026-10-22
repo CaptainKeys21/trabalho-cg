@@ -31,6 +31,12 @@ class Point3D():
     def asList(self):
         return [self.x, self.y, self.z]
 
+    def __str__(self) -> str:
+        return str((self.getX(), self.getY(), self.getZ()))
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
 class Shape3D(ABC):
     def __init__(self, name: str, cords: list[Point3D], color: str = "#000000"):
         self.name = name
@@ -126,10 +132,10 @@ class Window3D(Shape3D):
 class Polygon3D(Shape3D):
     def __init__(self, name: str, cords: list[Point3D], edges: list[tuple[float, float]], color: str = "#000000"):
         super().__init__(name, cords, color)
-        self.vertices = edges
+        self.edges = edges
 
     def drawOrtogonal(self, viewport: Viewport):
-        for point0, point1 in self.vertices:
+        for point0, point1 in self.edges:
             x_vp0, y_vp0 = self.cord_matrix_ndc[point0][:2]
             x_vp1, y_vp1 = self.cord_matrix_ndc[point1][:2]
 
@@ -145,7 +151,9 @@ class Polygon3D(Shape3D):
                     viewport.create_line(clipped0x, clipped0y, clipped1x, clipped1y)
 
     def drawPerspective(self, viewport: Viewport):
-        for point0, point1 in self.vertices:
+        for point0_f, point1_f in self.edges:
+            point0 = int(point0_f)
+            point1 = int(point1_f)
             z_vp0 = max(float(self.cord_matrix_ndc_perspective[point0][2]), 1e-9)
             z_vp1 = max(float(self.cord_matrix_ndc_perspective[point1][2]), 1e-9)
 

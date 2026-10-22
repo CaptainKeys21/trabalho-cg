@@ -339,7 +339,7 @@ class SideMenu3D(tk.Frame):
             filetypes=[("Arquivos OBJ", "*.obj"), ("Todos os Arquivos", "*.*")]
         )
         if filepath:
-            self.viewport.export_obj(filepath)
+            self.viewport.export_obj3D(filepath)
 
     def load_file(self):
         filepath = filedialog.askopenfilename(
@@ -347,7 +347,7 @@ class SideMenu3D(tk.Frame):
             filetypes=[("Arquivos OBJ", "*.obj"), ("Todos os Arquivos", "*.*")]
         )
         if filepath:
-            self.viewport.import_obj(filepath)
+            self.viewport.import_obj3D(filepath)
             self.update_list_box()
 
     def _on_mousewheel(self, event):

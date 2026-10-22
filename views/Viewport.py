@@ -1,6 +1,7 @@
 from tkinter import Canvas
 
 from data.ClippingTool import ClippingTool
+from data.ObjConverter3D import ObjConverter3D
 from data.Transform3d import Transform3d
 from data.ViewportData import ViewportData
 from data.WindowData import WindowData
@@ -155,5 +156,12 @@ class Viewport(Canvas):
 
     def import_obj(self, filepath: str):
         self.shapes = ObjConverter._import(filepath)
+        self.render()
+
+    def export_obj3D(self, filepath: str):
+        ObjConverter3D._export(filepath, self.shapes)
+
+    def import_obj3D(self, filepath: str):
+        self.shapes = ObjConverter3D._import(filepath)
         self.render()
                  
