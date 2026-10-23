@@ -162,6 +162,7 @@ class Viewport(Canvas):
         ObjConverter3D._export(filepath, self.shapes)
 
     def import_obj3D(self, filepath: str):
-        self.shapes = ObjConverter3D._import(filepath)
+        for i in ObjConverter3D._import(filepath):
+            self.shapes.append(i)
         self.render()
                  

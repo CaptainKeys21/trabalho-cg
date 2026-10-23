@@ -135,7 +135,10 @@ class Polygon3D(Shape3D):
         self.edges = edges
 
     def drawOrtogonal(self, viewport: Viewport):
-        for point0, point1 in self.edges:
+        for point0_f, point1_f in self.edges:
+            point0 = int(point0_f)
+            point1 = int(point1_f)
+
             x_vp0, y_vp0 = self.cord_matrix_ndc[point0][:2]
             x_vp1, y_vp1 = self.cord_matrix_ndc[point1][:2]
 
@@ -169,4 +172,4 @@ class Polygon3D(Shape3D):
                     clipped0x, clipped0y = viewport._ndc_to_viewport(clipped0[0], clipped0[1])
                     clipped1x, clipped1y = viewport._ndc_to_viewport(clipped1[0], clipped1[1])
 
-                    viewport.create_line(clipped0x, clipped0y, clipped1x, clipped1y)
+                    viewport.create_line(clipped0x, clipped0y, clipped1x, clipped1y, fill=self.color)
