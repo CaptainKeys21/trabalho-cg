@@ -173,3 +173,77 @@ class Polygon3D(Shape3D):
                     clipped1x, clipped1y = viewport._ndc_to_viewport(clipped1[0], clipped1[1])
 
                     viewport.create_line(clipped0x, clipped0y, clipped1x, clipped1y, fill=self.color)
+
+
+class Curve3D(Shape3D):
+    def __init__(self, name: str, controlMatrices, method, delta, matrixSize, color: str = "#000000"):
+        super().__init__(name, None, color)
+        self.delta = delta
+        self.method = method
+        self.controlMatrices = controlMatrices
+        self.matrix_sizes = matrixSize
+        self.matrix_amount = len(controlMatrices)
+
+        self.control_matrices = []
+        self.control_matrices_perspective = []
+
+        arr = []
+
+        for matrix in controlMatrices:
+            for row in matrix:
+                for value in row:
+                    arr.append([value.getX(), value.getY(), value.getZ(), 1.0])
+
+        self.cord_matrix_world = np.array(arr)
+
+        vetor_delta = np.arange(0, 1 + delta, delta)
+        self.S = []
+
+        for delta in vetor_delta:
+            s = np.array([delta ** 3, delta ** 2, delta, 1])
+            self.S.append(s)
+
+        self.T = []
+        for s in self.S:
+            t = np.array([s]).T
+            self.T.append(t)
+
+    def updateControlMatrix(self):
+        for matrix_count in range(0, self.matrix_amount):
+            matrix_perspective = []
+            matrix = []
+            for line in range(0, self.matrix_sizes):
+                line_values_perspective = []
+                line_values = []
+                for column in range(0, self.matrix_sizes):
+                    line_values_perspective.append(self.cord_matrix_ndc_perspective[line * self.matrix_sizes + column])
+                    line_values.append(self.cord_matrix_ndc[line * self.matrix_sizes + column])
+                matrix_perspective.append(line_values_perspective)
+                matrix.append(line_values)
+            self.control_matrices_perspective.append(matrix_perspective)
+            self.control_matrices.append(matrix)
+
+    def drawOrtogonal(self, viewport: Viewport):
+        method_T = self.method.T
+        for matrix_count in range(0, self.matrix_amount):
+            X = self.control_matrices[matrix_count][:, :, 0]
+            Y = self.control_matrices[matrix_count][:, :, 1]
+            Z = self.control_matrices[matrix_count][:, :, 2]
+
+            px = []
+            py = []
+            pz = []
+            for s in self.S:
+                for t in self.T:
+                    px.append((s @ self.method @ X @ method_T @ t)[0])
+                    py.append((s @ self.method @ Y @ method_T @ t)[0])
+                    pz.append((s @ self.method @ Z @ method_T @ t)[0])
+
+            all_points_matrix = []
+            for line in px:
+                line_values = []
+                for column in line:
+                    line_values.append((px[line][column], py[line][column], pz[line][column]))
+                all_points_matrix.append(line_values)
+
+            # agora temos todos os pontos normalizados para tentar desenhar as linhas, eu acho

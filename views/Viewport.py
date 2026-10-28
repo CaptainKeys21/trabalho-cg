@@ -1,14 +1,15 @@
 from tkinter import Canvas
 
 from data.ClippingTool import ClippingTool
+from data.ObjConverter import ObjConverter
 from data.ObjConverter3D import ObjConverter3D
+from data.Shapes2d import Shape2D
+from data.Shapes3d import Window3D, Shape3D, Point3D
+from data.Transform2d import Transform2d
 from data.Transform3d import Transform3d
 from data.ViewportData import ViewportData
 from data.WindowData import WindowData
-from data.Shapes2d import Shape2D
-from data.Shapes3d import Window3D, Shape3D, Point3D, Polygon3D
-from data.Transform2d import Transform2d
-from data.ObjConverter import ObjConverter
+
 
 class Viewport(Canvas):
     def __init__(self, parent):
@@ -69,8 +70,8 @@ class Viewport(Canvas):
 
     def _3Dworld_to_viewport(self, xw: float, yw: float) -> tuple[float, float]: # Nao utilizado
         """Transformada de viewport (slide 28 - 1.1)"""
-        u = (xw - self.wObject.bottomLeft[0]) / self.wObject.width()
-        v = (yw - self.wObject.bottomLeft[1]) / self.wObject.height()
+        u = (xw - self.wObject.bottomLeft.getX()) / self.wObject.width()
+        v = (yw - self.wObject.bottomLeft.getY()) / self.wObject.height()
 
         x_vp = u * self.vpData.width()
         y_vp = (1 - v) * self.vpData.height()
