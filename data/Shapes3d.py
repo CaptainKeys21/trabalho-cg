@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from math import sqrt
 from typing import TYPE_CHECKING, Tuple
 
@@ -178,14 +179,6 @@ class Polygon3D(Shape3D):
 class Curve3D(Shape3D):
     def __init__(self, name: str, controlMatrices, method, delta = 0.02, matrixSize = 4, color: str = "#000000"):
 
-        points = []
-
-        for matrix in controlMatrices:
-            for row in matrix:
-                for value in row:
-                    points.append(value)
-
-        super().__init__(name, points, color)
         self.delta = delta
         self.method = method
         self.controlMatrices = controlMatrices
@@ -208,36 +201,26 @@ class Curve3D(Shape3D):
             t = np.array([s]).T
             self.T.append(t)
 
-    def updateControlMatrix(self):
-        self.control_matrices = []
-        self.control_matrices_perspective = []
-        for matrix_count in range(0, self.matrix_amount):
-            matrix_perspective = []
-            matrix = []
-            for line in range(0, self.matrix_sizes):
-                line_values_perspective = []
-                line_values = []
-                for column in range(0, self.matrix_sizes):
-                    line_values_perspective.append(self.cord_matrix_ndc_perspective[line * self.matrix_sizes + column])
-                    line_values.append(self.cord_matrix_ndc[line * self.matrix_sizes + column])
-                matrix_perspective.append(line_values_perspective)
-                matrix.append(line_values)
-            self.control_matrices_perspective.append(matrix_perspective)
-            self.control_matrices.append(matrix)
-
-    def drawOrtogonal(self, viewport: Viewport):
-        self.updateControlMatrix()
 
         method_T = self.method.T
+        self.all_points_matrix = []
         for matrix_count in range(0, self.matrix_amount):
             X = []
             Y = []
             Z = []
 
-            for coord in self.control_matrices[matrix_count]:
-                X.append(coord[0])
-                Y.append(coord[1])
-                Z.append(coord[2])
+            for line in controlMatrices[matrix_count]:
+                X_line = []
+                Y_line = []
+                Z_line = []
+                for coord in line:
+                    X_line.append(coord.getX())
+                    Y_line.append(coord.getY())
+                    Z_line.append(coord.getZ())
+                X.append(X_line)
+                Y.append(Y_line)
+                Z.append(Z_line)
+            # print(X, '\n', Y, '\n', Z)
 
             px = []
             py = []
@@ -252,19 +235,48 @@ class Curve3D(Shape3D):
             py = np.array(py).reshape((len(self.S), len(self.T)))
             pz = np.array(pz).reshape((len(self.S), len(self.T)))
 
-            all_points_matrix = []
             for line in range(0, len(px)):
                 line_values = []
                 for column in range(0, len(px[0])):
                     line_values.append((px[line][column], py[line][column], pz[line][column]))
-                all_points_matrix.append(line_values)
+                self.all_points_matrix.append(line_values)
 
-            for line in range(0, len(all_points_matrix) - 1):
-                for column in range(0, len(all_points_matrix[0]) - 1):
-                    point00 = all_points_matrix[line][column]
-                    point01 = all_points_matrix[line][column + 1]
-                    point10 = all_points_matrix[line + 1][column]
+        arr = []
+        for line in self.all_points_matrix:
+            for p in line:
+                arr.append(Point3D((p[0], p[1], p[2])))
+        self.cord_matrix_world = np.array(arr)
 
+        super().__init__(name, arr, color)
+        np.set_printoptions(threshold=sys.maxsize)
+        #
+        # print(self.cord_matrix_world)
+
+
+    def updateCoordMatrix(self):
+        self.all_points_matrix = []
+        for i in range(0, len(self.S)):
+            line = []
+            for j in range(0, len(self.T)):
+                line.append(self.cord_matrix_ndc[i * len(self.S) + j])
+            self.all_points_matrix.append(line)
+
+
+    def drawOrtogonal(self, viewport: Viewport):
+        self.updateCoordMatrix()
+        for line in range(0, len(self.all_points_matrix)):
+            for column in range(0, len(self.all_points_matrix[0])):
+                point00 = self.all_points_matrix[line][column]
+
+                if(column + 1 < len(self.all_points_matrix[0])):
+                    point01 = self.all_points_matrix[line][column + 1]
+                else: point01 = None
+
+                if(line + 1 < len(self.all_points_matrix)):
+                    point10 = self.all_points_matrix[line + 1][column]
+                else: point10 = None
+
+                if(point01 is not None):
                     clipped0, clipped1 = viewport.clippingTool.clippingAlgorithm((point00[0], point00[1]), (point01[0], point01[1]))
                     if not (clipped0[0] == 0 and clipped0[1] == 0 and clipped1[0] == 0 and clipped1[1] == 0):
                         clipped0x, clipped0y = viewport._ndc_to_viewport(clipped0[0], clipped0[1])
@@ -272,6 +284,7 @@ class Curve3D(Shape3D):
 
                         viewport.create_line(clipped0x, clipped0y, clipped1x, clipped1y, fill=self.color)
 
+                if(point10 is not None):
                     clipped2, clipped3 = viewport.clippingTool.clippingAlgorithm((point00[0], point00[1]), (point10[0], point10[1]))
                     if not (clipped2[0] == 0 and clipped2[1] == 0 and clipped3[0] == 0 and clipped3[1] == 0):
                         clipped2x, clipped2y = viewport._ndc_to_viewport(clipped2[0], clipped2[1])
