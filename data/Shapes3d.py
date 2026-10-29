@@ -220,7 +220,6 @@ class Curve3D(Shape3D):
                 X.append(X_line)
                 Y.append(Y_line)
                 Z.append(Z_line)
-            # print(X, '\n', Y, '\n', Z)
 
             px = []
             py = []
@@ -248,18 +247,19 @@ class Curve3D(Shape3D):
         self.cord_matrix_world = np.array(arr)
 
         super().__init__(name, arr, color)
-        np.set_printoptions(threshold=sys.maxsize)
-        #
-        # print(self.cord_matrix_world)
 
 
     def updateCoordMatrix(self):
         self.all_points_matrix = []
+        self.all_points_matrix_perspective = []
         for i in range(0, len(self.S)):
             line = []
+            line_perspective = []
             for j in range(0, len(self.T)):
                 line.append(self.cord_matrix_ndc[i * len(self.S) + j])
+                line_perspective.append(self.cord_matrix_ndc_perspective[i * len(self.S) + j])
             self.all_points_matrix.append(line)
+            self.all_points_matrix_perspective.append(line_perspective)
 
 
     def drawOrtogonal(self, viewport: Viewport):
@@ -292,7 +292,45 @@ class Curve3D(Shape3D):
 
                         viewport.create_line(clipped2x, clipped2y, clipped3x, clipped3y, fill=self.color)
 
-            # agora temos todos os pontos normalizados para tentar desenhar as linhas, eu acho
-
     def drawPerspective(self, viewport: Viewport):
-        pass
+        self.updateCoordMatrix()
+        for line in range(0, len(self.all_points_matrix_perspective)):
+            for column in range(0, len(self.all_points_matrix_perspective[0])):
+                point00 = self.all_points_matrix_perspective[line][column]
+
+                if(column + 1 < len(self.all_points_matrix_perspective[0])):
+                    point01 = self.all_points_matrix_perspective[line][column + 1]
+                else: point01 = None
+
+                if(line + 1 < len(self.all_points_matrix_perspective)):
+                    point10 = self.all_points_matrix_perspective[line + 1][column]
+                else: point10 = None
+
+                z_vp00 = max(float(point00[2]), 1e-9)
+
+                x_vp00 = point00[0] * viewport.perspective_window_distance / z_vp00
+                y_vp00 = point00[1] * viewport.perspective_window_distance / z_vp00
+
+                if(point01 is not None and not(point00[2] <= 0 and point01[2] <= 0)):
+                    z_vp01 = max(float(point01[2]), 1e-9)
+                    x_vp01 = point01[0] * viewport.perspective_window_distance / z_vp01
+                    y_vp01 = point01[1] * viewport.perspective_window_distance / z_vp01
+
+                    clipped0, clipped1 = viewport.clippingTool.clippingAlgorithm((x_vp00, y_vp00), (x_vp01, y_vp01))
+                    if not (clipped0[0] == 0 and clipped0[1] == 0 and clipped1[0] == 0 and clipped1[1] == 0):
+                        clipped0x, clipped0y = viewport._ndc_to_viewport(clipped0[0], clipped0[1])
+                        clipped1x, clipped1y = viewport._ndc_to_viewport(clipped1[0], clipped1[1])
+
+                        viewport.create_line(clipped0x, clipped0y, clipped1x, clipped1y, fill=self.color)
+
+                if(point10 is not None and not(point00[2] <= 0 and point10[2] <= 0)):
+                    z_vp10 = max(float(point10[2]), 1e-9)
+                    x_vp10 = point10[0] * viewport.perspective_window_distance / z_vp10
+                    y_vp10 = point10[1] * viewport.perspective_window_distance / z_vp10
+
+                    clipped2, clipped3 = viewport.clippingTool.clippingAlgorithm((x_vp00, y_vp00), (x_vp10, y_vp10))
+                    if not (clipped2[0] == 0 and clipped2[1] == 0 and clipped3[0] == 0 and clipped3[1] == 0):
+                        clipped2x, clipped2y = viewport._ndc_to_viewport(clipped2[0], clipped2[1])
+                        clipped3x, clipped3y = viewport._ndc_to_viewport(clipped3[0], clipped3[1])
+
+                        viewport.create_line(clipped2x, clipped2y, clipped3x, clipped3y, fill=self.color)
