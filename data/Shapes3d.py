@@ -176,8 +176,16 @@ class Polygon3D(Shape3D):
 
 
 class Curve3D(Shape3D):
-    def __init__(self, name: str, controlMatrices, method, delta, matrixSize, color: str = "#000000"):
-        super().__init__(name, None, color)
+    def __init__(self, name: str, controlMatrices, method, delta = 0.02, matrixSize = 4, color: str = "#000000"):
+
+        points = []
+
+        for matrix in controlMatrices:
+            for row in matrix:
+                for value in row:
+                    points.append(value)
+
+        super().__init__(name, points, color)
         self.delta = delta
         self.method = method
         self.controlMatrices = controlMatrices
@@ -187,14 +195,6 @@ class Curve3D(Shape3D):
         self.control_matrices = []
         self.control_matrices_perspective = []
 
-        arr = []
-
-        for matrix in controlMatrices:
-            for row in matrix:
-                for value in row:
-                    arr.append([value.getX(), value.getY(), value.getZ(), 1.0])
-
-        self.cord_matrix_world = np.array(arr)
 
         vetor_delta = np.arange(0, 1 + delta, delta)
         self.S = []
@@ -224,11 +224,18 @@ class Curve3D(Shape3D):
             self.control_matrices.append(matrix)
 
     def drawOrtogonal(self, viewport: Viewport):
+        self.updateControlMatrix()
+
         method_T = self.method.T
         for matrix_count in range(0, self.matrix_amount):
-            X = self.control_matrices[matrix_count][:, :, 0]
-            Y = self.control_matrices[matrix_count][:, :, 1]
-            Z = self.control_matrices[matrix_count][:, :, 2]
+            X = []
+            Y = []
+            Z = []
+
+            for coord in self.control_matrices[matrix_count]:
+                X.append(coord[0])
+                Y.append(coord[1])
+                Z.append(coord[2])
 
             px = []
             py = []
@@ -239,11 +246,17 @@ class Curve3D(Shape3D):
                     py.append((s @ self.method @ Y @ method_T @ t)[0])
                     pz.append((s @ self.method @ Z @ method_T @ t)[0])
 
+            px = np.array(px).reshape((len(self.S), len(self.T)))
+            py = np.array(py).reshape((len(self.S), len(self.T)))
+            pz = np.array(pz).reshape((len(self.S), len(self.T)))
+
             all_points_matrix = []
-            for line in px:
+            for line in range(0, len(px)):
                 line_values = []
-                for column in line:
+                for column in range(0, len(px[0])):
                     line_values.append((px[line][column], py[line][column], pz[line][column]))
                 all_points_matrix.append(line_values)
-
             # agora temos todos os pontos normalizados para tentar desenhar as linhas, eu acho
+
+    def drawPerspective(self, viewport: Viewport):
+        pass

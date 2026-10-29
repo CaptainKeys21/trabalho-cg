@@ -1,10 +1,12 @@
 from tkinter import Canvas
 
+import numpy as np
+
 from data.ClippingTool import ClippingTool
 from data.ObjConverter import ObjConverter
 from data.ObjConverter3D import ObjConverter3D
 from data.Shapes2d import Shape2D
-from data.Shapes3d import Window3D, Shape3D, Point3D
+from data.Shapes3d import Window3D, Shape3D, Point3D, Curve3D
 from data.Transform2d import Transform2d
 from data.Transform3d import Transform3d
 from data.ViewportData import ViewportData
@@ -34,6 +36,17 @@ class Viewport(Canvas):
         #                                                 (-100, -100, 200), (100, -100, 200), (100, 100, 200), (-100, 100, 200)],
         #                                                 [(0, 1), (1, 2), (2, 3), (3, 0), (0, 4), (1, 5), (2, 6), (3, 7),
         #                                                  (4, 5), (5, 6), (6, 7), (7, 4)]))
+        matrix = [[[Point3D((0, 0, 0)), Point3D((0, 100, 0)), Point3D((0, 200, 0)), Point3D((0, 300, 0))],
+         [Point3D((100, 0, 0)), Point3D((100, 100, 100)), Point3D((100, 200, 100)), Point3D((100, 300, 0))],
+         [Point3D((100, 0, 0)), Point3D((200, 100, 100)), Point3D((200, 200, 100)), Point3D((200, 300, 0))],
+         [Point3D((300, 0, 0)), Point3D((300, 100, 0)), Point3D((300, 200, 0)), Point3D((300, 300, 0))]]]
+
+        mb = np.array([[-1.0, 3.0, -3.0, 1.0],
+                       [3.0, -6.0, 3.0, 0.0],
+                       [-3.0, 3.0, 0.0, 0.0],
+                       [1.0, 0.0, 0.0, 0.0]])
+
+        self.add_shape3D(Curve3D("test", matrix, mb))
         self.render(True)
 
         # self._draw_crosshair()
