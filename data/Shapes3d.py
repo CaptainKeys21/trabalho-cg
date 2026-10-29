@@ -209,6 +209,8 @@ class Curve3D(Shape3D):
             self.T.append(t)
 
     def updateControlMatrix(self):
+        self.control_matrices = []
+        self.control_matrices_perspective = []
         for matrix_count in range(0, self.matrix_amount):
             matrix_perspective = []
             matrix = []
