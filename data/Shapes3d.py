@@ -256,6 +256,27 @@ class Curve3D(Shape3D):
                 for column in range(0, len(px[0])):
                     line_values.append((px[line][column], py[line][column], pz[line][column]))
                 all_points_matrix.append(line_values)
+
+            for line in range(0, len(all_points_matrix) - 1):
+                for column in range(0, len(all_points_matrix[0]) - 1):
+                    point00 = all_points_matrix[line][column]
+                    point01 = all_points_matrix[line][column + 1]
+                    point10 = all_points_matrix[line + 1][column]
+
+                    clipped0, clipped1 = viewport.clippingTool.clippingAlgorithm((point00[0], point00[1]), (point01[0], point01[1]))
+                    if not (clipped0[0] == 0 and clipped0[1] == 0 and clipped1[0] == 0 and clipped1[1] == 0):
+                        clipped0x, clipped0y = viewport._ndc_to_viewport(clipped0[0], clipped0[1])
+                        clipped1x, clipped1y = viewport._ndc_to_viewport(clipped1[0], clipped1[1])
+
+                        viewport.create_line(clipped0x, clipped0y, clipped1x, clipped1y, fill=self.color)
+
+                    clipped2, clipped3 = viewport.clippingTool.clippingAlgorithm((point00[0], point00[1]), (point10[0], point10[1]))
+                    if not (clipped2[0] == 0 and clipped2[1] == 0 and clipped3[0] == 0 and clipped3[1] == 0):
+                        clipped2x, clipped2y = viewport._ndc_to_viewport(clipped2[0], clipped2[1])
+                        clipped3x, clipped3y = viewport._ndc_to_viewport(clipped3[0], clipped3[1])
+
+                        viewport.create_line(clipped2x, clipped2y, clipped3x, clipped3y, fill=self.color)
+
             # agora temos todos os pontos normalizados para tentar desenhar as linhas, eu acho
 
     def drawPerspective(self, viewport: Viewport):
