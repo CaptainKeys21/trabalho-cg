@@ -117,18 +117,8 @@ class ObjConverter3D:
                 elif prefix == "surf":
                     middle_of_curve = True
                 elif prefix == "end":
-                    mb = np.array([[-1.0, 3.0, -3.0, 1.0],
-                                   [3.0, -6.0, 3.0, 0.0],
-                                   [-3.0, 3.0, 0.0, 0.0],
-                                   [1.0, 0.0, 0.0, 0.0]])
 
-                    bs = np.array([[-1.0, 3.0, -3.0, 1.0],
-                                   [3.0, -6.0, 3.0, 0.0],
-                                   [-3.0, 0.0, 3.0, 0.0],
-                                   [1.0, 4.0, 1.0, 0.0]])
-
-                    method = mb if current_curve_type == "bezier" else bs
-                    shape = Curve3D(current_name, current_matrix_list, method, current_curve_type, float(current_step))
+                    shape = Curve3D(current_name, current_matrix_list, current_curve_type, float(current_step))
                     loaded_shapes.append(shape)
 
                 # elif prefix == "b":

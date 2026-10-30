@@ -177,11 +177,25 @@ class Polygon3D(Shape3D):
 
 
 class Curve3D(Shape3D):
-    def __init__(self, name: str, controlMatrices, method, methodName, delta = 0.02, matrixSize = 4, color: str = "#000000"):
+    def __init__(self, name: str, controlMatrices, methodName, delta = 0.02, matrixSize = 4, color: str = "#000000", method=None):
 
         self.methodName = methodName
         self.delta = delta
-        self.method = method
+
+        mb = np.array([[-1.0, 3.0, -3.0, 1.0],
+                       [3.0, -6.0, 3.0, 0.0],
+                       [-3.0, 3.0, 0.0, 0.0],
+                       [1.0, 0.0, 0.0, 0.0]])
+
+        bs = np.array([[-1.0, 3.0, -3.0, 1.0],
+                       [3.0, -6.0, 3.0, 0.0],
+                       [-3.0, 0.0, 3.0, 0.0],
+                       [1.0, 4.0, 1.0, 0.0]])
+
+        self.method = mb if methodName == "bezier" else bs
+        print(methodName)
+        if method is not None: self.method = method
+
         self.matrix_sizes = matrixSize
         self.matrix_amount = len(controlMatrices)
 

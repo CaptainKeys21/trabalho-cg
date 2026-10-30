@@ -71,7 +71,7 @@ class NewShapePopup3D(tk.Toplevel):
         self.combo_tipo = ttk.Combobox(
             self,
             textvariable=self.var_tipo,
-            values=["Ponto 3D", "Polígono 3D", "Superfície Bézier"],
+            values=["Ponto 3D", "Polígono 3D", "Superfície Bicúbica"],
             state="readonly"
         )
         self.combo_tipo.pack(fill="x", padx=10)
@@ -163,6 +163,21 @@ class NewShapePopup3D(tk.Toplevel):
 
         self._toggle_entradas()
 
+        self.var_curve_type = tk.StringVar(value="bezier")
+        tk.Radiobutton(
+            self,
+            text="Curva Bezier",
+            variable=self.var_curve_type,
+            value="bezier"
+        ).pack(anchor="w", padx=10)
+
+        tk.Radiobutton(
+            self,
+            text="Curva B-Spline",
+            variable=self.var_curve_type,
+            value="bspline"
+        ).pack(anchor="w", padx=10)
+
     # ---------------------------------------------------------
     # Interface
     # ---------------------------------------------------------
@@ -183,7 +198,7 @@ class NewShapePopup3D(tk.Toplevel):
         tipo = self.var_tipo.get()
 
         # Os vértices são editáveis apenas para polígonos.
-        estado_vertices = "normal" if tipo in ["Polígono 3D", "Superfície Bézier"] else "disabled"
+        estado_vertices = "normal" if tipo in ["Polígono 3D", "Superfície Bicúbica"] else "disabled"
 
         self.ent_custom.config(state=estado_vertices)
 
@@ -307,12 +322,12 @@ class NewShapePopup3D(tk.Toplevel):
                     color=self.selected_color
                 )
 
-            elif tipo == "Superfície Bézier":
+            elif tipo == "Superfície Bicúbica":
                 vertices = self._parse_vertices(offset)
                 
                 # Permite qualquer quantidade de retalhos, desde que sejam blocos de 16
                 if len(vertices) % 16 != 0 or len(vertices) == 0:
-                    raise ValueError(f"Uma Superfície Bézier precisa de múltiplos de 16 vértices (16 por retalho). Foram informados {len(vertices)}.")
+                    raise ValueError(f"Uma Superfície Bicúbica precisa de múltiplos de 16 vértices (16 por retalho). Foram informados {len(vertices)}.")
                 
                 num_patches = len(vertices) // 16
                 controlMatrices = []
@@ -339,8 +354,7 @@ class NewShapePopup3D(tk.Toplevel):
                 forma = Curve3D(
                     name=nome,
                     controlMatrices=controlMatrices, # Agora repassa as 3 matrizes
-                    method=bezier_matrix,
-                    methodName="Bézier Bicúbica",
+                    methodName=self.var_curve_type.get(),
                     delta=0.1, 
                     matrixSize=4,
                     color=self.selected_color
