@@ -1,11 +1,11 @@
-from data.Shapes3d import Shape3D, Point3DRender, Polygon3D, Point3D, Window3D
+from data.Shapes3d import Shape3D, Point3DRender, Polygon3D, Point3D, Window3D, Curve3D
 
 
 class ObjConverter3D:
     @staticmethod
     def _export(filepath: str, shapes: list[Shape3D]):
         with open(filepath, 'w') as file:
-            file.write("# Viewport 2D file\n")
+            file.write("# Viewport 3D file\n")
 
             global_vertex_id = 1 # Será responsável por enumerar as vértices do arquivo todo
 
@@ -26,6 +26,18 @@ class ObjConverter3D:
                 if isinstance(shape, Polygon3D):
                     for point0, point1 in shape.edges:
                         file.write(f"l {point0} {point1}\n") # Lista de linhas para wireframe
+
+                if isinstance(shape, Curve3D):
+                    file.write(f"cstype {shape.methodName}\n")
+                    for o in range(0, len(object_indexes)):
+                        if(o % 16 == 0): file.write(f"surf\n")
+                        file.write(f"{o} ")
+                        if(o % 4 == 3):
+                            if(o % 16 != 15):
+                                file.write(f"\\\n")
+                            else: file.write(f"\n")
+                    file.write(f"end\n")
+
 
                 index_str = " ".join(map(str, object_indexes))
                 if isinstance(shape, Point3DRender):

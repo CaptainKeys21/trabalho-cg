@@ -46,7 +46,7 @@ class Viewport(Canvas):
                        [-3.0, 3.0, 0.0, 0.0],
                        [1.0, 0.0, 0.0, 0.0]])
 
-        self.add_shape3D(Curve3D("test", matrix, mb))
+        self.add_shape3D(Curve3D("test", matrix, mb, "bezier"))
         self.render(True)
 
         # self._draw_crosshair()

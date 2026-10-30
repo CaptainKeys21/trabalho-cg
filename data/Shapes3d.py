@@ -177,8 +177,9 @@ class Polygon3D(Shape3D):
 
 
 class Curve3D(Shape3D):
-    def __init__(self, name: str, controlMatrices, method, delta = 0.02, matrixSize = 4, color: str = "#000000"):
+    def __init__(self, name: str, controlMatrices, method, methodName, delta = 0.02, matrixSize = 4, color: str = "#000000"):
 
+        self.methodName = methodName
         self.delta = delta
         self.method = method
         self.controlMatrices = controlMatrices
