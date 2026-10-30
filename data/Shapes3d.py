@@ -284,8 +284,8 @@ class Curve3D(Shape3D):
                 line = []
                 line_perspective = []
                 for j in range(0, len(self.T)):
-                    line.append(self.cord_matrix_ndc[(k * len(self.S) * 4) + i * len(self.S) + j])
-                    line_perspective.append(self.cord_matrix_ndc_perspective[(k * len(self.S) * 4) + i * len(self.S) + j])
+                    line.append(self.cord_matrix_ndc[int(k * len(self.cord_matrix_ndc_perspective)/self.matrix_amount) + i * len(self.S) + j])
+                    line_perspective.append(self.cord_matrix_ndc_perspective[int(k * len(self.cord_matrix_ndc_perspective)/self.matrix_amount) + i * len(self.S) + j])
                 matrix.append(line)
                 matrix_perspective.append(line_perspective)
             self.all_points_matrices.append(matrix)
