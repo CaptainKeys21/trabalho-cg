@@ -7,7 +7,9 @@ if TYPE_CHECKING:
 import tkinter as tk
 from tkinter import ttk, colorchooser
 
-from data.Shapes3d import Point3DRender, Polygon3D, Point3D
+import numpy as np
+
+from data.Shapes3d import Point3DRender, Polygon3D, Point3D, Curve3D
 
 
 # Parcialmente gerado por LLM (chat-GPT, modelo especifico desconhecido, very open, openAI)
@@ -69,7 +71,7 @@ class NewShapePopup3D(tk.Toplevel):
         self.combo_tipo = ttk.Combobox(
             self,
             textvariable=self.var_tipo,
-            values=["Ponto 3D", "Polígono 3D"],
+            values=["Ponto 3D", "Polígono 3D", "Superfície Bézier"],
             state="readonly"
         )
         self.combo_tipo.pack(fill="x", padx=10)
@@ -181,9 +183,7 @@ class NewShapePopup3D(tk.Toplevel):
         tipo = self.var_tipo.get()
 
         # Os vértices são editáveis apenas para polígonos.
-        estado_vertices = (
-            "normal" if tipo == "Polígono 3D" else "disabled"
-        )
+        estado_vertices = "normal" if tipo in ["Polígono 3D", "Superfície Bézier"] else "disabled"
 
         self.ent_custom.config(state=estado_vertices)
 
@@ -304,6 +304,40 @@ class NewShapePopup3D(tk.Toplevel):
                     nome,
                     vertices,
                     edges=edges,
+                    color=self.selected_color
+                )
+
+            elif tipo == "Superfície Bézier":
+                vertices = self._parse_vertices(offset)
+                
+                # A Superfície Bicúbica necessita estritamente de 16 pontos de controle (malha 4x4)
+                if len(vertices) != 16:
+                    raise ValueError(f"Uma Superfície Bicúbica de Bézier requer exatamente 16 vértices (4x4). Você informou {len(vertices)}.")
+                
+                # Agrupa a lista plana de 16 vértices em uma matriz 4x4 (lista de listas)
+                matriz_4x4 = []
+                for i in range(4):
+                    linha = vertices[i * 4 : (i + 1) * 4]
+                    matriz_4x4.append(linha)
+                    
+                # A classe Curve3D espera um array de matrizes de controle
+                controlMatrices = [matriz_4x4]
+
+                # Matriz Base de Bézier
+                bezier_matrix = np.array([
+                    [-1,  3, -3,  1],
+                    [ 3, -6,  3,  0],
+                    [-3,  3,  0,  0],
+                    [ 1,  0,  0,  0]
+                ], dtype=float)
+
+                forma = Curve3D(
+                    name=nome,
+                    controlMatrices=controlMatrices,
+                    method=bezier_matrix,
+                    methodName="Bézier Bicúbica",
+                    delta=0.1, 
+                    matrixSize=4,
                     color=self.selected_color
                 )
 
