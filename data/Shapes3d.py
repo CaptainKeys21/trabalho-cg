@@ -182,7 +182,6 @@ class Curve3D(Shape3D):
         self.methodName = methodName
         self.delta = delta
         self.method = method
-        self.controlMatrices = controlMatrices
         self.matrix_sizes = matrixSize
         self.matrix_amount = len(controlMatrices)
 
@@ -202,6 +201,7 @@ class Curve3D(Shape3D):
             t = np.array([s]).T
             self.T.append(t)
 
+        self.control_matrices_vertices = []
 
         method_T = self.method.T
         self.all_points_matrix = []
@@ -218,6 +218,7 @@ class Curve3D(Shape3D):
                     X_line.append(coord.getX())
                     Y_line.append(coord.getY())
                     Z_line.append(coord.getZ())
+                    self.control_matrices_vertices.append([coord.getX(), coord.getY(), coord.getZ(), 1.0])
                 X.append(X_line)
                 Y.append(Y_line)
                 Z.append(Z_line)
@@ -241,6 +242,8 @@ class Curve3D(Shape3D):
                     line_values.append((px[line][column], py[line][column], pz[line][column]))
                 self.all_points_matrix.append(line_values)
 
+        self.control_matrices_vertices = np.array(self.control_matrices_vertices)
+
         arr = []
         for line in self.all_points_matrix:
             for p in line:
@@ -248,6 +251,10 @@ class Curve3D(Shape3D):
         self.cord_matrix_world = np.array(arr)
 
         super().__init__(name, arr, color)
+
+    def transform(self, matrix: np.ndarray):
+        super().transform(matrix)
+        self.control_matrices_vertices = self.control_matrices_vertices @ matrix
 
 
     def updateCoordMatrix(self):

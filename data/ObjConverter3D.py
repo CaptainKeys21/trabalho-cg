@@ -1,3 +1,5 @@
+import numpy as np
+
 from data.Shapes3d import Shape3D, Point3DRender, Polygon3D, Point3D, Window3D, Curve3D
 
 
@@ -15,13 +17,22 @@ class ObjConverter3D:
                 # file.write(f"# color {shape.color}\n")
 
                 object_indexes = []
-                for i in range(shape.cord_matrix_world.shape[0]):
-                    x = shape.cord_matrix_world[i, 0]
-                    y = shape.cord_matrix_world[i, 1]
-                    z = shape.cord_matrix_world[i, 2]
-                    file.write(f"v {x} {y} {z}\n") # Em arquivo .obj precisamos inserir o Z também, que para 2D é 0
-                    object_indexes.append(global_vertex_id)
-                    global_vertex_id += 1
+                if not(isinstance(shape, Curve3D)):
+                    for i in range(shape.cord_matrix_world.shape[0]):
+                        x = shape.cord_matrix_world[i, 0]
+                        y = shape.cord_matrix_world[i, 1]
+                        z = shape.cord_matrix_world[i, 2]
+                        file.write(f"v {x} {y} {z}\n")
+                        object_indexes.append(global_vertex_id)
+                        global_vertex_id += 1
+                else:
+                    for i in range(shape.control_matrices_vertices.shape[0]):
+                        x = shape.control_matrices_vertices[i, 0]
+                        y = shape.control_matrices_vertices[i, 1]
+                        z = shape.control_matrices_vertices[i, 2]
+                        file.write(f"v {x} {y} {z}\n")
+                        object_indexes.append(global_vertex_id)
+                        global_vertex_id += 1
 
                 if isinstance(shape, Polygon3D):
                     for point0, point1 in shape.edges:
@@ -29,6 +40,7 @@ class ObjConverter3D:
 
                 if isinstance(shape, Curve3D):
                     file.write(f"cstype {shape.methodName}\n")
+                    file.write(f"step {shape.delta}\n")
                     for o in range(0, len(object_indexes)):
                         if(o % 16 == 0): file.write(f"surf\n")
                         file.write(f"{o} ")
@@ -55,12 +67,25 @@ class ObjConverter3D:
             current_name="Object"
             current_color="#000000"
 
+            current_curve_type = ""
+            current_step = 0
+            middle_of_curve = False
+            current_matrix_list = []
+            current_matrix = []
+
             for line in file:
                 parts = line.strip().split()
                 if not parts:
                     continue
 
                 prefix = parts[0]
+
+                if(middle_of_curve):
+                    current_matrix.append([vertex[int(parts[0])], vertex[int(parts[1])], vertex[int(parts[2])], vertex[int(parts[3])]])
+                    if(len(parts) < 5):
+                        current_matrix_list.append(current_matrix)
+                        current_matrix = []
+                        middle_of_curve = False
 
                 if prefix == "v": # dados de vértices
                     vertex.append(Point3D((float(parts[1]), float(parts[2]), float(parts[3])))) # Ignoramos o Z
@@ -81,6 +106,29 @@ class ObjConverter3D:
                     index = [int(p.split('/')[0]) - 1 for p in parts[1:]]
                     cords = [vertex[i] for i in index]
                     shape = Polygon3D(current_name, cords, edge, current_color)
+                    loaded_shapes.append(shape)
+
+                elif prefix == "cstype":
+                    current_curve_type = parts[1]
+                    current_matrix_list = []
+                    current_matrix = []
+                elif prefix == "step":
+                    current_step = parts[1]
+                elif prefix == "surf":
+                    middle_of_curve = True
+                elif prefix == "end":
+                    mb = np.array([[-1.0, 3.0, -3.0, 1.0],
+                                   [3.0, -6.0, 3.0, 0.0],
+                                   [-3.0, 3.0, 0.0, 0.0],
+                                   [1.0, 0.0, 0.0, 0.0]])
+
+                    bs = np.array([[-1.0, 3.0, -3.0, 1.0],
+                                   [3.0, -6.0, 3.0, 0.0],
+                                   [-3.0, 0.0, 3.0, 0.0],
+                                   [1.0, 4.0, 1.0, 0.0]])
+
+                    method = mb if current_curve_type == "bezier" else bs
+                    shape = Curve3D(current_name, current_matrix_list, method, current_curve_type, float(current_step))
                     loaded_shapes.append(shape)
 
                 # elif prefix == "b":
