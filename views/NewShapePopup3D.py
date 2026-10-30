@@ -310,20 +310,25 @@ class NewShapePopup3D(tk.Toplevel):
             elif tipo == "Superfície Bézier":
                 vertices = self._parse_vertices(offset)
                 
-                # A Superfície Bicúbica necessita estritamente de 16 pontos de controle (malha 4x4)
-                if len(vertices) != 16:
-                    raise ValueError(f"Uma Superfície Bicúbica de Bézier requer exatamente 16 vértices (4x4). Você informou {len(vertices)}.")
+                # Permite qualquer quantidade de retalhos, desde que sejam blocos de 16
+                if len(vertices) % 16 != 0 or len(vertices) == 0:
+                    raise ValueError(f"Uma Superfície Bézier precisa de múltiplos de 16 vértices (16 por retalho). Foram informados {len(vertices)}.")
                 
-                # Agrupa a lista plana de 16 vértices em uma matriz 4x4 (lista de listas)
-                matriz_4x4 = []
-                for i in range(4):
-                    linha = vertices[i * 4 : (i + 1) * 4]
-                    matriz_4x4.append(linha)
-                    
-                # A classe Curve3D espera um array de matrizes de controle
-                controlMatrices = [matriz_4x4]
+                num_patches = len(vertices) // 16
+                controlMatrices = []
 
-                # Matriz Base de Bézier
+                # Fatiamos a lista plana em blocos de 16 pontos para cada retalho
+                for p in range(num_patches):
+                    patch_vertices = vertices[p * 16 : (p + 1) * 16]
+                    matriz_4x4 = []
+                    
+                    # Subdivide os 16 pontos do retalho atual em 4 linhas de 4
+                    for i in range(4):
+                        linha = patch_vertices[i * 4 : (i + 1) * 4]
+                        matriz_4x4.append(linha)
+                        
+                    controlMatrices.append(matriz_4x4)
+
                 bezier_matrix = np.array([
                     [-1,  3, -3,  1],
                     [ 3, -6,  3,  0],
@@ -333,7 +338,7 @@ class NewShapePopup3D(tk.Toplevel):
 
                 forma = Curve3D(
                     name=nome,
-                    controlMatrices=controlMatrices,
+                    controlMatrices=controlMatrices, # Agora repassa as 3 matrizes
                     method=bezier_matrix,
                     methodName="Bézier Bicúbica",
                     delta=0.1, 
